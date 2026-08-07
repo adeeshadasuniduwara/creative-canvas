@@ -64,6 +64,7 @@
 <!-- EmailJS — sends signup verification codes and notifies the owner of payment proofs. See FIREBASE-SETUP.md. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
   // 🔧 PASTE YOUR EMAILJS PUBLIC KEY / SERVICE ID / TEMPLATE IDs HERE (see FIREBASE-SETUP.md)
@@ -438,49 +439,6 @@
   }
   #greetToast.show{transform:translateX(0);}
   @media(max-width:600px){#greetToast{right:16px;left:16px;max-width:none;top:80px;}}
-
-  /* ---------- Site Update Overlay ---------- */
-  #siteUpdateOverlay{
-    position:fixed;inset:0;z-index:99999;background:var(--bg);display:none;
-    align-items:center;justify-content:center;overflow:hidden;
-  }
-  #siteUpdateOverlay.show{display:flex;}
-  .update-bg{
-    position:absolute;inset:0;
-    background:radial-gradient(circle at 25% 25%, rgba(255,176,32,0.22), transparent 45%),
-               radial-gradient(circle at 75% 30%, rgba(255,61,119,0.2), transparent 45%),
-               radial-gradient(circle at 50% 85%, rgba(139,47,232,0.22), transparent 50%);
-    animation:gateBgShift 6s ease-in-out infinite alternate;
-  }
-  .update-content{position:relative;z-index:1;text-align:center;max-width:460px;padding:40px 28px;animation:fadeUp .7s ease both;}
-  .update-logo-wrap{
-    width:120px;height:120px;border-radius:30px;margin:0 auto 24px;padding:4px;
-    background:var(--grad);box-shadow:0 0 0 rgba(255,61,119,0.4);
-    animation:updateLogoPulse 1.6s ease-in-out infinite;
-  }
-  .update-logo-wrap img{width:100%;height:100%;border-radius:26px;object-fit:cover;display:block;}
-  @keyframes updateLogoPulse{
-    0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(255,61,119,0.4);}
-    50%{transform:scale(1.06);box-shadow:0 0 50px rgba(255,61,119,0.55);}
-  }
-  .update-content h2{font-family:'Poppins';font-size:24px;font-weight:800;margin-bottom:10px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-  .update-content p{color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:24px;}
-  .update-countdown{
-    width:84px;height:84px;border-radius:50%;margin:0 auto 8px;position:relative;display:flex;align-items:center;justify-content:center;
-    font-family:'Poppins';font-size:30px;font-weight:800;color:var(--text);
-    animation:updateCountdownPop .5s ease;
-  }
-  .update-countdown svg{position:absolute;inset:0;transform:rotate(-90deg);}
-  .update-countdown svg circle{fill:none;stroke-width:5;}
-  .update-countdown svg circle.track{stroke:var(--line);}
-  .update-countdown svg circle.progress{stroke:url(#updateRingGrad);stroke-linecap:round;transition:stroke-dashoffset 1s linear;}
-  .update-countdown span{position:relative;z-index:1;}
-  @keyframes updateCountdownPop{0%{transform:scale(0.6);opacity:0;}100%{transform:scale(1);opacity:1;}}
-  .update-dots{display:flex;gap:6px;justify-content:center;margin-top:18px;}
-  .update-dots span{width:7px;height:7px;border-radius:50%;background:var(--grad);animation:updateDot 1.2s ease-in-out infinite;}
-  .update-dots span:nth-child(2){animation-delay:.15s;}
-  .update-dots span:nth-child(3){animation-delay:.3s;}
-  @keyframes updateDot{0%,100%{opacity:.25;transform:translateY(0);}50%{opacity:1;transform:translateY(-5px);}}
 
   .otp-input{
     width:100%;text-align:center;letter-spacing:10px;font-size:26px;font-weight:700;
@@ -1231,6 +1189,17 @@
       <div><div class="val" id="statMonthOrders">–</div><div class="lbl">Orders This Month</div></div>
       <div><div class="val" id="statPending">–</div><div class="lbl">Pending Payments (Rs.)</div></div>
     </div>
+    <div id="adminInsightsBox" style="display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h4 style="font-size:14px;margin:0;">Income — Last 6 Months</h4>
+        <button type="button" id="toggleInsightsBtn" class="mini-btn">Hide</button>
+      </div>
+      <div id="insightsBody">
+        <canvas id="incomeChart" height="90"></canvas>
+        <h4 style="font-size:14px;margin:20px 0 10px;">🏆 Most Popular Packages</h4>
+        <div id="popularPackagesList" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+    </div>
     <div class="auth-tabs admin-tabs" style="margin-bottom:22px;">
       <button class="auth-tab active" id="adminTabOrders" type="button">Orders</button>
       <button class="auth-tab" id="adminTabCustomers" type="button">Customers</button>
@@ -1545,32 +1514,6 @@
 
 <div id="greetToast"></div>
 
-<div id="siteUpdateOverlay">
-  <div class="update-bg"></div>
-  <div class="update-content">
-    <div class="update-logo-wrap"><img src="assets/logo.jpg" alt="Creative Canvas Studio"></div>
-    <h2>We're polishing things up!</h2>
-    <p>Sorry for the tiny interruption — we've just rolled out an update to make your experience even better. Hang tight, we'll bring you right back in a moment.</p>
-    <div class="update-countdown">
-      <svg viewBox="0 0 84 84" width="84" height="84">
-        <defs>
-          <linearGradient id="updateRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="var(--gold)"/>
-            <stop offset="40%" stop-color="var(--pink)"/>
-            <stop offset="70%" stop-color="var(--purple)"/>
-            <stop offset="100%" stop-color="var(--blue)"/>
-          </linearGradient>
-        </defs>
-        <circle class="track" cx="42" cy="42" r="38"/>
-        <circle class="progress" id="updateRingProgress" cx="42" cy="42" r="38"/>
-      </svg>
-      <span id="updateCountdownNum">3</span>
-    </div>
-    <div class="update-dots"><span></span><span></span><span></span></div>
-    <button type="button" id="updatePostponeBtn" style="margin-top:20px;background:none;border:none;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;">Not now — remind me in 5 minutes</button>
-  </div>
-</div>
-
 <!-- 🔧 Background music — add your own royalty-free/copyright-free instrumental track (no vocals) at assets/background-music.mp3.
      Good free sources: pixabay.com/music (free, no attribution needed), YouTube Audio Library, freemusicarchive.org (check license). -->
 <audio id="bgMusic" loop preload="auto">
@@ -1590,56 +1533,6 @@
   if (!window.location.hash) window.scrollTo(0, 0);
 
   document.getElementById('year').textContent = new Date().getFullYear();
-
-  /* ---------------- Auto-detect a new site deployment, then show a friendly update screen ---------------- */
-  let siteVersionMarker = null;
-  let siteUpdatePostponedUntil = 0;
-  async function checkForSiteUpdate() {
-    if (Date.now() < siteUpdatePostponedUntil) return;
-    try {
-      const res = await fetch(window.location.pathname + '?_check=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
-      const marker = res.headers.get('etag') || res.headers.get('last-modified');
-      if (!marker) return;
-      if (siteVersionMarker === null) { siteVersionMarker = marker; return; }
-      if (marker !== siteVersionMarker) {
-        runSiteUpdateSequence();
-      }
-    } catch (e) { /* non-critical — likely offline, just skip this check */ }
-  }
-  let siteUpdateTimer = null;
-  function runSiteUpdateSequence() {
-    const overlay = document.getElementById('siteUpdateOverlay');
-    const numEl = document.getElementById('updateCountdownNum');
-    const ring = document.getElementById('updateRingProgress');
-    const circumference = 2 * Math.PI * 38;
-    ring.style.strokeDasharray = circumference;
-    overlay.classList.add('show');
-    let n = 3;
-    const total = n;
-    numEl.textContent = n;
-    ring.style.strokeDashoffset = 0;
-    siteUpdateTimer = setInterval(() => {
-      n--;
-      if (n <= 0) {
-        clearInterval(siteUpdateTimer);
-        window.location.reload();
-        return;
-      }
-      numEl.style.animation = 'none';
-      void numEl.offsetWidth; // restart the pop animation each tick
-      numEl.style.animation = 'updateCountdownPop .5s ease';
-      numEl.textContent = n;
-      ring.style.strokeDashoffset = circumference * (1 - n / total);
-    }, 1000);
-  }
-  document.getElementById('updatePostponeBtn')?.addEventListener('click', () => {
-    if (siteUpdateTimer) clearInterval(siteUpdateTimer);
-    document.getElementById('siteUpdateOverlay').classList.remove('show');
-    siteUpdatePostponedUntil = Date.now() + 5 * 60 * 1000;
-    siteVersionMarker = null; // re-capture the (now-current) baseline so we don't loop-prompt for the same update
-  });
-  checkForSiteUpdate();
-  setInterval(checkForSiteUpdate, 3 * 60 * 1000); // re-check every 3 minutes
 
   const moonIcon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
   const sunIcon = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
@@ -3088,31 +2981,110 @@
     loadAdminStats();
   }
 
+  let incomeChartInstance = null;
   async function loadAdminStats() {
     try {
       const snap = await getDocs(ordersCol);
       let totalIncome = 0, monthOrders = 0, pending = 0;
       const now = new Date();
+      const monthlyIncome = {}; // 'YYYY-M' -> Rs.
       snap.forEach(d => {
         const o = d.data();
         if (o.archived) return;
         const total = o.totalAmount || 0;
         const advance = o.advancePayment || 0;
         const orderPending = total - advance;
-        totalIncome += (orderPending <= 0 || o.paymentStatus === 'approved') ? total : advance;
+        const earned = (orderPending <= 0 || o.paymentStatus === 'approved') ? total : advance;
+        totalIncome += earned;
         if (orderPending > 0 && o.paymentStatus !== 'approved') pending += orderPending;
         if (o.createdAt && o.createdAt.toDate) {
           const cd = o.createdAt.toDate();
           if (cd.getMonth() === now.getMonth() && cd.getFullYear() === now.getFullYear()) monthOrders++;
+          const key = cd.getFullYear() + '-' + cd.getMonth();
+          monthlyIncome[key] = (monthlyIncome[key] || 0) + earned;
         }
       });
       document.getElementById('statTotalIncome').textContent = totalIncome.toLocaleString();
       document.getElementById('statMonthOrders').textContent = monthOrders;
       document.getElementById('statPending').textContent = pending.toLocaleString();
+
+      // Build the last 6 months' labels + values (owner/admin only — never shown to customers)
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const labels = [], values = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
+        values.push(monthlyIncome[d.getFullYear() + '-' + d.getMonth()] || 0);
+      }
+      renderIncomeChart(labels, values);
+      loadPopularPackages();
+      document.getElementById('adminInsightsBox').style.display = 'block';
     } catch (err) {
       console.error('Stats load failed:', err);
     }
   }
+
+  function renderIncomeChart(labels, values) {
+    if (!window.Chart) return;
+    const ctx = document.getElementById('incomeChart');
+    if (!ctx) return;
+    if (incomeChartInstance) incomeChartInstance.destroy();
+    incomeChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Income (Rs.)',
+          data: values,
+          backgroundColor: 'rgba(255,61,119,0.55)',
+          borderRadius: 6,
+          maxBarThickness: 40
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--muted') } },
+          x: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--muted') } }
+        }
+      }
+    });
+  }
+
+  async function loadPopularPackages() {
+    const box = document.getElementById('popularPackagesList');
+    if (!box) return;
+    try {
+      const snap = await getDocs(bookingRequestsCol);
+      const counts = {};
+      snap.forEach(d => {
+        const items = d.data().items || [];
+        items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + (i.qty || 1); });
+      });
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      if (!sorted.length) { box.innerHTML = '<p style="color:var(--muted);font-size:13px;">No package requests recorded yet.</p>'; return; }
+      const maxCount = sorted[0][1];
+      box.innerHTML = sorted.map(([name, count]) => `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:12.5px;flex:0 0 140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>
+          <div style="flex:1;background:var(--bg-alt);border-radius:100px;height:8px;overflow:hidden;">
+            <div style="width:${(count / maxCount) * 100}%;height:100%;background:var(--grad);"></div>
+          </div>
+          <span style="font-size:12px;color:var(--muted);flex-shrink:0;">${count}×</span>
+        </div>`).join('');
+    } catch (err) {
+      box.innerHTML = '<p style="color:var(--pink);font-size:13px;">Could not load package stats.</p>';
+    }
+  }
+
+  document.getElementById('toggleInsightsBtn')?.addEventListener('click', (e) => {
+    const body = document.getElementById('insightsBody');
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? 'block' : 'none';
+    e.target.textContent = isHidden ? 'Hide' : 'Show';
+  });
+
   document.getElementById('exportBackupBtn')?.addEventListener('click', async (e) => {
     const btn = e.target;
     const original = btn.textContent;
