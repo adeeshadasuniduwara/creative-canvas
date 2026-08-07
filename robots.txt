@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://adeeshadasuniduwara.github.io/creative-canvas/sitemap.xml
