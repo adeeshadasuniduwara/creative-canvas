@@ -2761,7 +2761,7 @@
     const input = document.getElementById('adminCodeInput');
     msg.textContent = ''; input.value = '';
     let codeDoc;
-    try { codeDoc = await getDoc(doc(db, 'meta', 'adminAccess')); } catch (e) { codeDoc = null; }
+    try { codeDoc = await getDoc(doc(db, 'meta', 'adminAccess')); } catch (e) { console.error('Admin code read failed:', e); codeDoc = null; }
     const hasCode = !!(codeDoc && codeDoc.exists() && codeDoc.data().codeHash);
     if (!hasCode && currentUserIsOwner) {
       desc.textContent = "No admin code is set yet. As the owner, create one now — you'll need to share it with any admins you add.";
@@ -2785,7 +2785,10 @@
           markAdminCodeUnlocked();
           modal.style.display = 'none';
           onSuccess();
-        } catch (e) { msg.textContent = 'Could not save the code. Please try again.'; }
+        } catch (e) {
+          console.error('Admin code save failed:', e);
+          msg.textContent = 'Could not save the code (' + (e.code || e.message) + '). Your Firestore Rules likely need to be re-published — see FIREBASE-SETUP.md.';
+        }
         return;
       }
       try {
@@ -2797,7 +2800,10 @@
         } else {
           msg.textContent = 'Incorrect code.';
         }
-      } catch (e) { msg.textContent = 'Something went wrong. Please try again.'; }
+      } catch (e) {
+        console.error('Admin code verify failed:', e);
+        msg.textContent = 'Something went wrong (' + (e.code || e.message) + '). Please try again.';
+      }
     };
   }
   document.getElementById('adminCodeCancel')?.addEventListener('click', () => { document.getElementById('adminCodeModal').style.display = 'none'; });
