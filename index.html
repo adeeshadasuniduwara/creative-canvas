@@ -111,7 +111,7 @@
   *{margin:0;padding:0;box-sizing:border-box;}
 
   #authGate{
-    position:fixed;inset:0;z-index:9999;background:var(--bg);
+    position:fixed;inset:0;z-index:290;background:var(--bg);
     display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .auth-gate-bg{
@@ -123,7 +123,12 @@
   }
   @keyframes gateBgShift{0%{transform:scale(1) rotate(0deg);}100%{transform:scale(1.15) rotate(4deg);}}
   .auth-gate-content{position:relative;z-index:1;text-align:center;max-width:440px;padding:40px 28px;animation:fadeUp .9s ease both;}
-  .auth-gate-logo{width:76px;height:76px;border-radius:20px;object-fit:cover;margin-bottom:22px;box-shadow:0 20px 50px -12px rgba(255,61,119,0.4);animation:chatBob 3s ease-in-out infinite;}
+  .auth-gate-logo-wrap{
+    width:132px;height:132px;border-radius:32px;margin:0 auto 26px;padding:4px;
+    background:var(--grad);box-shadow:0 25px 60px -12px rgba(255,61,119,0.45);
+    animation:chatBob 3.4s ease-in-out infinite;
+  }
+  .auth-gate-logo{width:100%;height:100%;border-radius:28px;object-fit:cover;display:block;}
   .auth-gate-content h1{font-family:'Poppins';font-size:26px;font-weight:800;margin-bottom:14px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
   .auth-gate-content p{color:var(--muted);font-size:14.5px;line-height:1.7;margin-bottom:30px;}
   .auth-gate-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
@@ -693,7 +698,7 @@
 <div id="authGate">
   <div class="auth-gate-bg"></div>
   <div class="auth-gate-content">
-    <img src="assets/logo.jpg" alt="Creative Canvas Studio" class="auth-gate-logo">
+    <div class="auth-gate-logo-wrap"><img src="assets/logo.jpg" alt="Creative Canvas Studio" class="auth-gate-logo"></div>
     <h1>Creative Canvas Studio</h1>
     <p>Sri Lanka's first all-in-one online booking studio. Sign in or create a free account to explore our work, book a session, and track your orders.</p>
     <div class="auth-gate-ctas">
