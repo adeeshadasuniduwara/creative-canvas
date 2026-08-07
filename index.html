@@ -2120,10 +2120,11 @@
     document.getElementById('otpMsg').textContent = 'New code sent!';
   });
 
+  function getSLDateString() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
+  }
+
   if (firebaseReady) {
-    function getSLDateString() {
-      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
-    }
     function checkDailyAutoLogout() {
       if (!auth.currentUser) return;
       const today = getSLDateString();
