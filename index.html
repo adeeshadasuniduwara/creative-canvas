@@ -2847,7 +2847,7 @@
     adminModal.style.display = 'flex';
     document.getElementById('adminOrderForm').style.display = currentUserIsAdmin ? 'grid' : 'none';
     document.getElementById('adminTabAdmins').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabProducts').style.display = currentUserIsOwner ? 'inline-block' : 'none';
+    document.getElementById('adminTabProducts').style.display = currentUserIsAdmin ? 'inline-block' : 'none';
     document.getElementById('adminTabPortfolio').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('adminTabTeam').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('adminTabActivity').style.display = currentUserIsOwner ? 'inline-block' : 'none';
@@ -2951,7 +2951,7 @@
   document.getElementById('adminTabOrders')?.addEventListener('click', () => switchAdminTab('adminTabOrders'));
   document.getElementById('adminTabCustomers')?.addEventListener('click', () => { switchAdminTab('adminTabCustomers'); loadAdminCustomers(); });
   document.getElementById('adminTabProducts')?.addEventListener('click', () => {
-    if (!currentUserIsOwner) return;
+    if (!currentUserIsAdmin) return;
     switchAdminTab('adminTabProducts');
     loadAdminProducts();
   });
