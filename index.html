@@ -466,13 +466,15 @@
   .update-content h2{font-family:'Poppins';font-size:24px;font-weight:800;margin-bottom:10px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
   .update-content p{color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:24px;}
   .update-countdown{
-    width:84px;height:84px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;
-    background:var(--card);border:2px solid transparent;
-    background-image:linear-gradient(var(--card),var(--card)), var(--grad);
-    background-origin:border-box;background-clip:padding-box, border-box;
+    width:84px;height:84px;border-radius:50%;margin:0 auto 8px;position:relative;display:flex;align-items:center;justify-content:center;
     font-family:'Poppins';font-size:30px;font-weight:800;color:var(--text);
     animation:updateCountdownPop .5s ease;
   }
+  .update-countdown svg{position:absolute;inset:0;transform:rotate(-90deg);}
+  .update-countdown svg circle{fill:none;stroke-width:5;}
+  .update-countdown svg circle.track{stroke:var(--line);}
+  .update-countdown svg circle.progress{stroke:url(#updateRingGrad);stroke-linecap:round;transition:stroke-dashoffset 1s linear;}
+  .update-countdown span{position:relative;z-index:1;}
   @keyframes updateCountdownPop{0%{transform:scale(0.6);opacity:0;}100%{transform:scale(1);opacity:1;}}
   .update-dots{display:flex;gap:6px;justify-content:center;margin-top:18px;}
   .update-dots span{width:7px;height:7px;border-radius:50%;background:var(--grad);animation:updateDot 1.2s ease-in-out infinite;}
@@ -1549,8 +1551,23 @@
     <div class="update-logo-wrap"><img src="assets/logo.jpg" alt="Creative Canvas Studio"></div>
     <h2>We're polishing things up!</h2>
     <p>Sorry for the tiny interruption — we've just rolled out an update to make your experience even better. Hang tight, we'll bring you right back in a moment.</p>
-    <div class="update-countdown" id="updateCountdownNum">3</div>
+    <div class="update-countdown">
+      <svg viewBox="0 0 84 84" width="84" height="84">
+        <defs>
+          <linearGradient id="updateRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--gold)"/>
+            <stop offset="40%" stop-color="var(--pink)"/>
+            <stop offset="70%" stop-color="var(--purple)"/>
+            <stop offset="100%" stop-color="var(--blue)"/>
+          </linearGradient>
+        </defs>
+        <circle class="track" cx="42" cy="42" r="38"/>
+        <circle class="progress" id="updateRingProgress" cx="42" cy="42" r="38"/>
+      </svg>
+      <span id="updateCountdownNum">3</span>
+    </div>
     <div class="update-dots"><span></span><span></span><span></span></div>
+    <button type="button" id="updatePostponeBtn" style="margin-top:20px;background:none;border:none;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;">Not now — remind me in 5 minutes</button>
   </div>
 </div>
 
@@ -1576,7 +1593,9 @@
 
   /* ---------------- Auto-detect a new site deployment, then show a friendly update screen ---------------- */
   let siteVersionMarker = null;
+  let siteUpdatePostponedUntil = 0;
   async function checkForSiteUpdate() {
+    if (Date.now() < siteUpdatePostponedUntil) return;
     try {
       const res = await fetch(window.location.pathname + '?_check=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
       const marker = res.headers.get('etag') || res.headers.get('last-modified');
@@ -1587,16 +1606,22 @@
       }
     } catch (e) { /* non-critical — likely offline, just skip this check */ }
   }
+  let siteUpdateTimer = null;
   function runSiteUpdateSequence() {
     const overlay = document.getElementById('siteUpdateOverlay');
     const numEl = document.getElementById('updateCountdownNum');
+    const ring = document.getElementById('updateRingProgress');
+    const circumference = 2 * Math.PI * 38;
+    ring.style.strokeDasharray = circumference;
     overlay.classList.add('show');
     let n = 3;
+    const total = n;
     numEl.textContent = n;
-    const timer = setInterval(() => {
+    ring.style.strokeDashoffset = 0;
+    siteUpdateTimer = setInterval(() => {
       n--;
       if (n <= 0) {
-        clearInterval(timer);
+        clearInterval(siteUpdateTimer);
         window.location.reload();
         return;
       }
@@ -1604,8 +1629,15 @@
       void numEl.offsetWidth; // restart the pop animation each tick
       numEl.style.animation = 'updateCountdownPop .5s ease';
       numEl.textContent = n;
+      ring.style.strokeDashoffset = circumference * (1 - n / total);
     }, 1000);
   }
+  document.getElementById('updatePostponeBtn')?.addEventListener('click', () => {
+    if (siteUpdateTimer) clearInterval(siteUpdateTimer);
+    document.getElementById('siteUpdateOverlay').classList.remove('show');
+    siteUpdatePostponedUntil = Date.now() + 5 * 60 * 1000;
+    siteVersionMarker = null; // re-capture the (now-current) baseline so we don't loop-prompt for the same update
+  });
   checkForSiteUpdate();
   setInterval(checkForSiteUpdate, 3 * 60 * 1000); // re-check every 3 minutes
 
