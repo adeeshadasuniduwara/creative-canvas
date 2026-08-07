@@ -439,6 +439,47 @@
   #greetToast.show{transform:translateX(0);}
   @media(max-width:600px){#greetToast{right:16px;left:16px;max-width:none;top:80px;}}
 
+  /* ---------- Site Update Overlay ---------- */
+  #siteUpdateOverlay{
+    position:fixed;inset:0;z-index:99999;background:var(--bg);display:none;
+    align-items:center;justify-content:center;overflow:hidden;
+  }
+  #siteUpdateOverlay.show{display:flex;}
+  .update-bg{
+    position:absolute;inset:0;
+    background:radial-gradient(circle at 25% 25%, rgba(255,176,32,0.22), transparent 45%),
+               radial-gradient(circle at 75% 30%, rgba(255,61,119,0.2), transparent 45%),
+               radial-gradient(circle at 50% 85%, rgba(139,47,232,0.22), transparent 50%);
+    animation:gateBgShift 6s ease-in-out infinite alternate;
+  }
+  .update-content{position:relative;z-index:1;text-align:center;max-width:460px;padding:40px 28px;animation:fadeUp .7s ease both;}
+  .update-logo-wrap{
+    width:120px;height:120px;border-radius:30px;margin:0 auto 24px;padding:4px;
+    background:var(--grad);box-shadow:0 0 0 rgba(255,61,119,0.4);
+    animation:updateLogoPulse 1.6s ease-in-out infinite;
+  }
+  .update-logo-wrap img{width:100%;height:100%;border-radius:26px;object-fit:cover;display:block;}
+  @keyframes updateLogoPulse{
+    0%,100%{transform:scale(1);box-shadow:0 0 0 rgba(255,61,119,0.4);}
+    50%{transform:scale(1.06);box-shadow:0 0 50px rgba(255,61,119,0.55);}
+  }
+  .update-content h2{font-family:'Poppins';font-size:24px;font-weight:800;margin-bottom:10px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .update-content p{color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:24px;}
+  .update-countdown{
+    width:84px;height:84px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;
+    background:var(--card);border:2px solid transparent;
+    background-image:linear-gradient(var(--card),var(--card)), var(--grad);
+    background-origin:border-box;background-clip:padding-box, border-box;
+    font-family:'Poppins';font-size:30px;font-weight:800;color:var(--text);
+    animation:updateCountdownPop .5s ease;
+  }
+  @keyframes updateCountdownPop{0%{transform:scale(0.6);opacity:0;}100%{transform:scale(1);opacity:1;}}
+  .update-dots{display:flex;gap:6px;justify-content:center;margin-top:18px;}
+  .update-dots span{width:7px;height:7px;border-radius:50%;background:var(--grad);animation:updateDot 1.2s ease-in-out infinite;}
+  .update-dots span:nth-child(2){animation-delay:.15s;}
+  .update-dots span:nth-child(3){animation-delay:.3s;}
+  @keyframes updateDot{0%,100%{opacity:.25;transform:translateY(0);}50%{opacity:1;transform:translateY(-5px);}}
+
   .otp-input{
     width:100%;text-align:center;letter-spacing:10px;font-size:26px;font-weight:700;
     background:var(--bg-alt);border:1px solid var(--line);border-radius:12px;padding:16px;
@@ -1502,6 +1543,17 @@
 
 <div id="greetToast"></div>
 
+<div id="siteUpdateOverlay">
+  <div class="update-bg"></div>
+  <div class="update-content">
+    <div class="update-logo-wrap"><img src="assets/logo.jpg" alt="Creative Canvas Studio"></div>
+    <h2>We're polishing things up!</h2>
+    <p>Sorry for the tiny interruption — we've just rolled out an update to make your experience even better. Hang tight, we'll bring you right back in a moment.</p>
+    <div class="update-countdown" id="updateCountdownNum">3</div>
+    <div class="update-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
 <!-- 🔧 Background music — add your own royalty-free/copyright-free instrumental track (no vocals) at assets/background-music.mp3.
      Good free sources: pixabay.com/music (free, no attribution needed), YouTube Audio Library, freemusicarchive.org (check license). -->
 <audio id="bgMusic" loop preload="auto">
@@ -1521,6 +1573,41 @@
   if (!window.location.hash) window.scrollTo(0, 0);
 
   document.getElementById('year').textContent = new Date().getFullYear();
+
+  /* ---------------- Auto-detect a new site deployment, then show a friendly update screen ---------------- */
+  let siteVersionMarker = null;
+  async function checkForSiteUpdate() {
+    try {
+      const res = await fetch(window.location.pathname + '?_check=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+      const marker = res.headers.get('etag') || res.headers.get('last-modified');
+      if (!marker) return;
+      if (siteVersionMarker === null) { siteVersionMarker = marker; return; }
+      if (marker !== siteVersionMarker) {
+        runSiteUpdateSequence();
+      }
+    } catch (e) { /* non-critical — likely offline, just skip this check */ }
+  }
+  function runSiteUpdateSequence() {
+    const overlay = document.getElementById('siteUpdateOverlay');
+    const numEl = document.getElementById('updateCountdownNum');
+    overlay.classList.add('show');
+    let n = 3;
+    numEl.textContent = n;
+    const timer = setInterval(() => {
+      n--;
+      if (n <= 0) {
+        clearInterval(timer);
+        window.location.reload();
+        return;
+      }
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth; // restart the pop animation each tick
+      numEl.style.animation = 'updateCountdownPop .5s ease';
+      numEl.textContent = n;
+    }, 1000);
+  }
+  checkForSiteUpdate();
+  setInterval(checkForSiteUpdate, 3 * 60 * 1000); // re-check every 3 minutes
 
   const moonIcon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
   const sunIcon = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
@@ -2044,12 +2131,7 @@
   const welcomeSpeechText = "Welcome to Creative Canvas Studio. This is Sri Lanka's very own story, built by hands that believe great memories deserve great craftsmanship. From the very first click of the shutter, to the moment a drone lifts into the sky, to the final frame of a wedding film — we pour our heart into every shot, so that your moments live on forever. You're not just booking a service today. For the first time in Sri Lanka, you're stepping into an all-in-one online studio, where photography, videography, dronography and editing come together, all in one place, all online, all for you. Thank you for choosing Creative Canvas Studio. Let's create something beautiful, together.";
 
   function canPlayWelcomeSpeechToday() {
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const raw = JSON.parse(localStorage.getItem('ccs-welcome-speech') || '{}');
-      if (raw.date !== today) return true;
-      return (raw.count || 0) < 3;
-    } catch (e) { return true; }
+    return true; // no daily limit — always plays on sign in/sign up, as requested
   }
   function recordWelcomeSpeechPlay() {
     try {
