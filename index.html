@@ -1156,6 +1156,12 @@
       <button type="submit" class="btn btn-primary">Save Changes</button>
       <p id="editProfileMsg" style="font-size:13px;min-height:16px;"></p>
     </form>
+    <div id="setPasswordBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:18px;">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px;" id="setPasswordLabel">Add a password to your account so you can also sign in with Email + Password (useful for the desktop Admin app).</p>
+      <input type="password" id="newAccountPassword" placeholder="New password (min 6 characters)" minlength="6" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'Inter';font-size:14.5px;margin-bottom:10px;">
+      <button type="button" class="btn btn-outline" id="setPasswordBtn" style="width:100%;justify-content:center;">Set Password</button>
+      <p id="setPasswordMsg" style="font-size:12.5px;min-height:16px;margin-top:8px;"></p>
+    </div>
   </div>
 </div>
 
@@ -1676,7 +1682,8 @@
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
     GoogleAuthProvider, signInWithPopup, signOut,
-    onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendPasswordResetEmail
+    onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendPasswordResetEmail,
+    linkWithCredential, updatePassword, EmailAuthProvider
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
@@ -1974,10 +1981,47 @@
         if (d.photo) { previewWrap.innerHTML = `<img src="${d.photo}" alt="">`; epPhotoData = d.photo; }
       }
     } catch (err) { /* non-critical */ }
+    const setPwBox = document.getElementById('setPasswordBox');
+    if (currentUserIsAdmin) {
+      setPwBox.style.display = 'block';
+      const hasPassword = currentUser.providerData.some(p => p.providerId === 'password');
+      document.getElementById('setPasswordLabel').textContent = hasPassword
+        ? 'Change your password (used for signing in with Email + Password, e.g. in the desktop Admin app).'
+        : 'Add a password to your account so you can also sign in with Email + Password (useful for the desktop Admin app, where Google sign-in isn\'t supported).';
+      document.getElementById('setPasswordBtn').textContent = hasPassword ? 'Change Password' : 'Set Password';
+    } else {
+      setPwBox.style.display = 'none';
+    }
     editProfileModal.style.display = 'flex';
   });
   document.getElementById('editProfileClose')?.addEventListener('click', () => { editProfileModal.style.display = 'none'; });
   editProfileModal?.addEventListener('click', (e) => { if (e.target === editProfileModal) editProfileModal.style.display = 'none'; });
+
+  document.getElementById('setPasswordBtn')?.addEventListener('click', async () => {
+    const msg = document.getElementById('setPasswordMsg');
+    const newPw = document.getElementById('newAccountPassword').value;
+    if (!newPw || newPw.length < 6) { msg.style.color = 'var(--pink)'; msg.textContent = 'Please enter at least 6 characters.'; return; }
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Saving…';
+    try {
+      const hasPassword = currentUser.providerData.some(p => p.providerId === 'password');
+      if (hasPassword) {
+        await updatePassword(currentUser, newPw);
+      } else {
+        const credential = EmailAuthProvider.credential(currentUser.email, newPw);
+        await linkWithCredential(currentUser, credential);
+      }
+      msg.style.color = 'var(--blue)'; msg.textContent = 'Done! You can now sign in with Email + Password too — use ' + currentUser.email + '.';
+      document.getElementById('newAccountPassword').value = '';
+      document.getElementById('setPasswordBtn').textContent = 'Change Password';
+      document.getElementById('setPasswordLabel').textContent = 'Change your password (used for signing in with Email + Password, e.g. in the desktop Admin app).';
+    } catch (err) {
+      if (err.code === 'auth/requires-recent-login') {
+        msg.style.color = 'var(--pink)'; msg.textContent = 'For security, please sign out and sign in again with Google first, then retry this.';
+      } else {
+        msg.style.color = 'var(--pink)'; msg.textContent = 'Could not save: ' + (err.code || err.message);
+      }
+    }
+  });
 
   document.getElementById('epPhoto')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
