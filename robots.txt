@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /admin.html
 
 Sitemap: https://adeeshadasuniduwara.github.io/creative-canvas/sitemap.xml
