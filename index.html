@@ -2077,7 +2077,6 @@
     if (!canPlayWelcomeSpeechToday()) return;
     try {
       window.speechSynthesis.cancel();
-      preloadBackgroundMusic();
       const utter = new SpeechSynthesisUtterance(welcomeSpeechText);
       utter.rate = 0.92;
       utter.pitch = 0.96;
@@ -2085,7 +2084,7 @@
       const voices = window.speechSynthesis.getVoices();
       const bestVoice = pickBestVoice(voices);
       if (bestVoice) utter.voice = bestVoice;
-      utter.onend = () => { startBackgroundMusic(); hideSpeechMuteButton(); };
+      utter.onend = hideSpeechMuteButton;
       utter.onerror = hideSpeechMuteButton;
       window.speechSynthesis.speak(utter);
       recordWelcomeSpeechPlay();
@@ -2107,9 +2106,7 @@
   });
 
   // Play the welcome speech once per page load too (in addition to login/signup), voices load async in some browsers
-  let welcomeSpeechAttemptedThisLoad = false;
   function tryAutoPlayOnLoad() {
-    welcomeSpeechAttemptedThisLoad = true;
     if (window.speechSynthesis.getVoices().length) { playWelcomeSpeech(); }
     else { window.speechSynthesis.onvoiceschanged = () => playWelcomeSpeech(); }
   }
@@ -2124,36 +2121,59 @@
   }
   ['click', 'touchstart', 'keydown'].forEach(evt => document.addEventListener(evt, firstInteractionSpeechFallback, { once: false }));
 
+  /* ---------------- Background Music — fully independent of speech, keeps playing/looping
+     from login until the tab is refreshed or the user mutes it themselves. ---------------- */
+  let musicUserMuted = false;
+  let musicStartAttempted = false;
+
   function preloadBackgroundMusic() {
     const music = document.getElementById('bgMusic');
     if (!music) return;
-    music.volume = 0;
     try { music.load(); } catch (e) { /* non-critical */ }
   }
 
   function startBackgroundMusic() {
     const music = document.getElementById('bgMusic');
     const toggle = document.getElementById('bgMusicToggle');
-    if (!music) return;
+    if (!music || musicUserMuted) return;
+    musicStartAttempted = true;
+    toggle.style.display = 'flex';
+    if (!music.paused) return; // already playing — don't restart/refade
     const targetVolume = 0.35;
     music.volume = 0;
     music.play().then(() => {
-      toggle.style.display = 'flex';
       document.getElementById('bgMusicLabel').textContent = 'Music On';
-      // Smooth fade-in instead of an abrupt jump to full volume
       let vol = 0;
       const fade = setInterval(() => {
         vol = Math.min(targetVolume, vol + 0.03);
         music.volume = vol;
         if (vol >= targetVolume) clearInterval(fade);
       }, 80);
-    }).catch(() => { /* browser blocked autoplay — user can still start it via the toggle if shown elsewhere */ });
+    }).catch(() => { /* autoplay blocked — first-interaction fallback below will retry */ });
   }
+
+  // Try immediately on load, then keep retrying on the first user interaction until it
+  // actually starts (covers every browser's autoplay policy without needing speech to finish).
+  preloadBackgroundMusic();
+  startBackgroundMusic();
+  function firstInteractionMusicFallback() {
+    const music = document.getElementById('bgMusic');
+    if (music && music.paused && !musicUserMuted) startBackgroundMusic();
+  }
+  ['click', 'touchstart', 'keydown'].forEach(evt => document.addEventListener(evt, firstInteractionMusicFallback, { once: false }));
+
   document.getElementById('bgMusicToggle')?.addEventListener('click', () => {
     const music = document.getElementById('bgMusic');
     const label = document.getElementById('bgMusicLabel');
-    if (music.paused) { music.play(); label.textContent = 'Music On'; }
-    else { music.pause(); label.textContent = 'Music Off'; }
+    if (music.paused) {
+      musicUserMuted = false;
+      music.play(); music.volume = 0.35;
+      label.textContent = 'Music On';
+    } else {
+      musicUserMuted = true;
+      music.pause();
+      label.textContent = 'Music Off';
+    }
   });
 
   function showGreetToast(msg) {
