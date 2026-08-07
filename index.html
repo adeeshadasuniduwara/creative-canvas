@@ -1451,7 +1451,7 @@
 
 <!-- 🔧 Background music — add your own royalty-free/copyright-free instrumental track (no vocals) at assets/background-music.mp3.
      Good free sources: pixabay.com/music (free, no attribution needed), YouTube Audio Library, freemusicarchive.org (check license). -->
-<audio id="bgMusic" loop preload="none">
+<audio id="bgMusic" loop preload="auto">
   <source src="assets/background-music.mp3" type="audio/mpeg">
 </audio>
 <button type="button" id="bgMusicToggle" aria-label="Toggle background music" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:250;background:var(--card);border:1px solid var(--line);border-radius:100px;padding:9px 16px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;font-family:'Inter';align-items:center;gap:8px;">
@@ -1983,6 +1983,7 @@
     if (!canPlayWelcomeSpeechToday()) return;
     try {
       window.speechSynthesis.cancel();
+      preloadBackgroundMusic();
       const utter = new SpeechSynthesisUtterance(welcomeSpeechText);
       utter.rate = 0.92;
       utter.pitch = 0.96;
@@ -2029,14 +2030,29 @@
   }
   ['click', 'touchstart', 'keydown'].forEach(evt => document.addEventListener(evt, firstInteractionSpeechFallback, { once: false }));
 
+  function preloadBackgroundMusic() {
+    const music = document.getElementById('bgMusic');
+    if (!music) return;
+    music.volume = 0;
+    try { music.load(); } catch (e) { /* non-critical */ }
+  }
+
   function startBackgroundMusic() {
     const music = document.getElementById('bgMusic');
     const toggle = document.getElementById('bgMusicToggle');
     if (!music) return;
-    music.volume = 0.35;
+    const targetVolume = 0.35;
+    music.volume = 0;
     music.play().then(() => {
       toggle.style.display = 'flex';
       document.getElementById('bgMusicLabel').textContent = 'Music On';
+      // Smooth fade-in instead of an abrupt jump to full volume
+      let vol = 0;
+      const fade = setInterval(() => {
+        vol = Math.min(targetVolume, vol + 0.03);
+        music.volume = vol;
+        if (vol >= targetVolume) clearInterval(fade);
+      }, 80);
     }).catch(() => { /* browser blocked autoplay — user can still start it via the toggle if shown elsewhere */ });
   }
   document.getElementById('bgMusicToggle')?.addEventListener('click', () => {
