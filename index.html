@@ -570,6 +570,17 @@
   .chat-msg.user{background:var(--grad);color:#0a0a0d;align-self:flex-end;border-bottom-right-radius:4px;font-weight:600;}
   .chat-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 12px;}
   .chat-suggestion-btn{background:var(--bg-alt);border:1px solid var(--line);color:var(--text);font-size:11.5px;padding:6px 12px;border-radius:100px;cursor:pointer;font-family:'Inter';}
+  .chat-carousel{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;margin-top:4px;}
+  .chat-carousel-card{flex:0 0 100px;text-align:center;}
+  .chat-carousel-card img{width:100px;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin-bottom:4px;}
+  .chat-carousel-card b{display:block;font-size:10.5px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .chat-carousel-card span{display:block;font-size:10px;color:var(--gold);}
+  .chat-proactive-bubble{
+    position:fixed;z-index:249;background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:12px 16px;font-size:12.5px;max-width:200px;box-shadow:0 16px 40px -10px rgba(0,0,0,0.5);
+    animation:fadeUp .4s ease both;cursor:pointer;
+  }
+  .chat-proactive-bubble .close-x{position:absolute;top:4px;right:8px;color:var(--muted);font-size:14px;cursor:pointer;}
   .chat-suggestion-btn:hover{border-color:var(--pink);}
   .chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);}
   .chat-input-row input{flex:1;background:var(--bg-alt);border:1px solid var(--line);border-radius:100px;padding:10px 16px;color:var(--text);font-family:'Inter';font-size:13px;}
@@ -1232,6 +1243,7 @@
       <button class="auth-tab" id="adminTabBookings" type="button">Booking Requests</button>
       <button class="auth-tab" id="adminTabWaitlist" type="button">Waitlist</button>
       <button class="auth-tab" id="adminTabActivity" type="button" style="display:none;">Activity Log</button>
+      <button class="auth-tab" id="adminTabChatInsights" type="button" style="display:none;">Chat Insights</button>
     </div>
     <div id="adminOrdersView">
     <form id="adminOrderForm" class="admin-form">
@@ -1367,6 +1379,18 @@
     <div id="adminActivityView" style="display:none;">
       <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">A record of key actions taken by admins — who did what, and when.</p>
       <div id="adminActivityList" class="admin-list-grid"></div>
+    </div>
+    <div id="adminChatInsightsView" style="display:none;">
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">What people are actually asking the AI Assistant — use this to spot gaps in the FAQ or confusing spots on the site.</p>
+      <div class="ref-stat-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div><div class="val" id="chatStatTotal">–</div><div class="lbl">Questions Asked</div></div>
+        <div><div class="val" id="chatStatMatched">–</div><div class="lbl">Answered</div></div>
+        <div><div class="val" id="chatStatFallback">–</div><div class="lbl">Couldn't Answer</div></div>
+      </div>
+      <h4 style="font-size:14px;margin-bottom:10px;">🔥 Most Common Topics</h4>
+      <div id="chatTopTopics" style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;"></div>
+      <h4 style="font-size:14px;margin-bottom:10px;">❓ Recent "Couldn't Answer" Questions</h4>
+      <div id="chatUnansweredList" class="admin-list-grid"></div>
     </div>
   </div>
 </div>
@@ -3034,6 +3058,7 @@
     document.getElementById('adminTabPortfolio').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('adminTabTeam').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('adminTabActivity').style.display = currentUserIsOwner ? 'inline-block' : 'none';
+    document.getElementById('adminTabChatInsights').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('adminTabReferrals').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('adminTabWallets').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('adminTabWallets').style.display = currentUserIsOwner ? 'inline-block' : 'none';
@@ -3203,8 +3228,8 @@
     });
   });
 
-  const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity'];
-  const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView' };
+  const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity', 'adminTabChatInsights'];
+  const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView', adminTabChatInsights: 'adminChatInsightsView' };
   function switchAdminTab(activeTabId) {
     adminTabs.forEach(t => document.getElementById(t).classList.toggle('active', t === activeTabId));
     Object.values(adminViews).forEach(v => document.getElementById(v).style.display = 'none');
@@ -3254,6 +3279,48 @@
     switchAdminTab('adminTabActivity');
     loadAdminActivity();
   });
+  document.getElementById('adminTabChatInsights')?.addEventListener('click', () => {
+    if (!currentUserIsOwner) return;
+    switchAdminTab('adminTabChatInsights');
+    loadChatInsights();
+  });
+  async function loadChatInsights() {
+    try {
+      const snap = await getDocs(query(collection(db, 'chatLogs'), orderBy('createdAt', 'desc')));
+      let total = 0, matched = 0, fallback = 0;
+      const topicCounts = {};
+      const unanswered = [];
+      snap.forEach(d => {
+        const c = d.data();
+        total++;
+        if (c.matched) { matched++; topicCounts[c.matchedKey || 'general'] = (topicCounts[c.matchedKey || 'general'] || 0) + 1; }
+        else { fallback++; if (unanswered.length < 15) unanswered.push(c.text); }
+      });
+      document.getElementById('chatStatTotal').textContent = total;
+      document.getElementById('chatStatMatched').textContent = matched;
+      document.getElementById('chatStatFallback').textContent = fallback;
+      const sortedTopics = Object.entries(topicCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const topicsBox = document.getElementById('chatTopTopics');
+      if (!sortedTopics.length) { topicsBox.innerHTML = '<p style="color:var(--muted);font-size:13px;">No questions logged yet.</p>'; }
+      else {
+        const maxCount = sortedTopics[0][1];
+        topicsBox.innerHTML = sortedTopics.map(([topic, count]) => `
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:12.5px;flex:0 0 110px;text-transform:capitalize;">${escapeHtml(topic)}</span>
+            <div style="flex:1;background:var(--bg-alt);border-radius:100px;height:8px;overflow:hidden;">
+              <div style="width:${(count / maxCount) * 100}%;height:100%;background:var(--grad);"></div>
+            </div>
+            <span style="font-size:12px;color:var(--muted);flex-shrink:0;">${count}</span>
+          </div>`).join('');
+      }
+      const unansweredBox = document.getElementById('chatUnansweredList');
+      unansweredBox.innerHTML = unanswered.length
+        ? unanswered.map(t => `<div class="admin-order-row"><div class="info"><span>${escapeHtml(t)}</span></div></div>`).join('')
+        : '<p style="color:var(--muted);font-size:13px;">Nothing unanswered recently — nice!</p>';
+    } catch (err) {
+      console.error('Chat insights load failed:', err);
+    }
+  }
   async function loadAdminWaitlist() {
     const list = document.getElementById('adminWaitlistList');
     list.innerHTML = '<p style="color:var(--muted);font-size:13px;">Loading…</p>';
@@ -4289,6 +4356,7 @@
       si: "අපි Photography, Videography, Dronography (drone), සහ Editing සේවා දෙනවා — තනි තනි හෝ Combo packages විදිහට. උඩ 'Services' සහ 'Packages' sections බලන්න!"
     },
     {
+      key: 'packages',
       keywords: ['price', 'pricing', 'cost', 'package', 'packages', 'how much', 'ගාන', 'මිල', 'පැකේජ්'],
       en: "Prices vary by package — scroll to the 'Packages' section for exact rates in Rs., with live USD/USDT conversion shown too. Add one to your cart to get started!",
       si: "Price එක package එකට අනුව වෙනස්. 'Packages' section එකට scroll කරලා බලන්න — Rs. + live USD/USDT rate එකත් පේනවා. Cart එකට add කරලා පටන් ගන්න!"
@@ -4299,6 +4367,7 @@
       si: "අපිට Referral Program එකක් තියෙනවා! 🎁 මිතුරන් refer කරලා, මාසේ leaderboard එකේ පලවෙනි වුනොත් 0–10% discount එකක් ලැබෙනවා. මේක අවුරුද්දේ නිශ්චිත මාස වලට විතරයි run වෙන්නේ — active නම් sign in වුනාට පස්සේ 'Referrals' පේනවා, ළඟදීම open වෙනවා නම් countdown එකක් homepage එකේ පේනවා."
     },
     {
+      key: 'booking',
       keywords: ['book', 'booking', 'how to book', 'order', 'confirm', 'බුක්', 'ඕඩර්'],
       en: "Easy! Pick a package under 'Packages', add it to your cart 🛒, fill in your event date/time/location (a Google Maps link is required for location), choose advance payment or discuss with us, then checkout via WhatsApp. Your booking is also saved on our end automatically, even before we reply.",
       si: "ලේසියි! 'Packages' එකෙන් package එකක් තෝරලා cart 🛒 එකට දාන්න, event date/time/location දාන්න (location එකට Google Maps link එකක්ම ඕනේ), advance payment එකක් හෝ admin එක්ක discuss කරන්න තෝරලා WhatsApp එකෙන් checkout කරන්න. Booking එක අපේ පැත්තෙනුත් auto-ම save වෙනවා, අපි reply කරන්න කලින්ම."
@@ -4382,12 +4451,43 @@
     si: ['මොනවද services?', 'ගාන කීයද?', 'Book කරන්නෙ කොහොමද?', 'Discount තියෙනවද?']
   };
 
+  function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    if (!m) return n; if (!n) return m;
+    const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+    return dp[m][n];
+  }
+
   function matchChatKB(input) {
-    const norm = input.toLowerCase();
+    const norm = input.toLowerCase().trim();
+    // Pass 1: exact substring match (fast path, most common case)
     for (const entry of chatKB) {
       if (entry.keywords.some(k => norm.includes(k.toLowerCase()))) return entry;
     }
-    return null;
+    // Pass 2: fuzzy match — tolerate typos and near-misses (e.g. "pacage", "bookng", singlish spelling)
+    const words = norm.split(/\s+/).filter(w => w.length > 2);
+    let best = null, bestScore = 0;
+    for (const entry of chatKB) {
+      for (const k of entry.keywords) {
+        const kw = k.toLowerCase();
+        if (kw.length < 4) continue; // skip very short keywords, too noisy for fuzzy matching
+        for (const w of words) {
+          const dist = levenshtein(w, kw);
+          const tolerance = kw.length <= 5 ? 1 : 2;
+          if (dist <= tolerance) {
+            const score = kw.length - dist;
+            if (score > bestScore) { bestScore = score; best = entry; }
+          }
+        }
+      }
+    }
+    return bestScore >= 3 ? best : null;
   }
 
   function addChatMsg(text, who) {
@@ -4407,6 +4507,79 @@
     });
   }
 
+  const chatOccasions = [
+    { label: '💍 Wedding', section: '👰 Weddings (Full Day Coverage 8-10 Hours)' },
+    { label: '🎂 Birthday', section: '🎂 Personal & Family Shoots' },
+    { label: '📸 Portrait', section: '🎂 Personal & Family Shoots' },
+    { label: '🏢 Commercial', section: '🏢 Commercial, Food & Drone' },
+    { label: '🚁 Drone', section: '🏢 Commercial, Food & Drone' }
+  ];
+
+  async function logChatQuestion(text, matched) {
+    if (!firebaseReady) return;
+    try {
+      await addDoc(collection(db, 'chatLogs'), {
+        text: text.slice(0, 300), matched: !!matched, matchedKey: matched ? (matched.key || 'general') : null,
+        createdAt: serverTimestamp()
+      });
+    } catch (e) { /* non-critical, never block the chat over logging */ }
+  }
+
+  async function renderPackageCarousel() {
+    const body = document.getElementById('chatBody');
+    if (!firebaseReady) return;
+    try {
+      const snap = await getDocs(query(productsCol, orderBy('createdAt', 'asc')));
+      const items = [];
+      snap.forEach(d => { const p = d.data(); if (p.image) items.push(p); });
+      if (!items.length) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'chat-carousel';
+      wrap.innerHTML = items.slice(0, 8).map(p => {
+        const tier = (p.tiers && p.tiers[0]) || null;
+        return `<div class="chat-carousel-card">
+          <img src="${p.image}" alt="${escapeHtml(p.name || '')}">
+          <b>${escapeHtml(p.name || '')}</b>
+          ${tier ? `<span>From Rs. ${tier.price.toLocaleString()}</span>` : ''}
+        </div>`;
+      }).join('');
+      body.appendChild(wrap);
+      body.scrollTop = body.scrollHeight;
+    } catch (e) { /* non-critical */ }
+  }
+
+  function renderBookingOccasionChips() {
+    const body = document.getElementById('chatBody');
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-suggestions';
+    wrap.style.marginTop = '2px';
+    wrap.innerHTML = chatOccasions.map(o => `<button type="button" class="chat-suggestion-btn" data-occasion="${escapeHtml(o.section)}">${o.label}</button>`).join('');
+    body.appendChild(wrap);
+    body.scrollTop = body.scrollHeight;
+    wrap.querySelectorAll('[data-occasion]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        wrap.remove();
+        addChatMsg(btn.textContent, 'user');
+        const msg = chatLang === 'si'
+          ? `හොඳයි! "${btn.dataset.occasion}" කියන section එකේ ඔබට ගැලපෙන packages තියෙනවා — පහළ Packages එකට scroll කරලා බලන්න!`
+          : `Great choice! Head to the "${btn.dataset.occasion}" section under Packages — that's exactly what fits. Scroll down to take a look!`;
+        addChatMsg(msg, 'bot');
+        document.getElementById('packages')?.scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('chatWindow').classList.remove('open');
+      });
+    });
+  }
+
+  function renderWhatsAppHandoff(question) {
+    const body = document.getElementById('chatBody');
+    const wrap = document.createElement('div');
+    wrap.style.margin = '6px 0';
+    const waMsg = encodeURIComponent(`Hi! I asked your website assistant: "${question}" — could you help me with this?`);
+    wrap.innerHTML = `<a href="https://wa.me/94717935537?text=${waMsg}" target="_blank" rel="noopener" class="chat-suggestion-btn" style="display:inline-flex;text-decoration:none;">💬 Ask a real person on WhatsApp</a>`;
+    body.appendChild(wrap);
+    body.scrollTop = body.scrollHeight;
+  }
+
   function sendChatMessage(text) {
     if (!text.trim()) return;
     addChatMsg(text, 'user');
@@ -4420,9 +4593,33 @@
     setTimeout(() => {
       typing.remove();
       const match = matchChatKB(text);
+      logChatQuestion(text, match);
       addChatMsg(match ? match[chatLang] : chatFallback[chatLang], 'bot');
+      if (match && match.key === 'packages') renderPackageCarousel();
+      if (match && match.key === 'booking') renderBookingOccasionChips();
+      if (!match) renderWhatsAppHandoff(text);
     }, 500 + Math.random() * 500);
   }
+
+  (function initProactiveChatGreeting() {
+    if (localStorage.getItem('ccs-chat-proactive-dismissed')) return;
+    setTimeout(() => {
+      const fab = document.getElementById('chatFab');
+      const win = document.getElementById('chatWindow');
+      if (!fab || win.classList.contains('open')) return;
+      const rect = fab.getBoundingClientRect();
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-proactive-bubble';
+      bubble.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
+      bubble.style.bottom = (window.innerHeight - rect.top + 12) + 'px';
+      bubble.innerHTML = `<span class="close-x">&times;</span>${chatLang === 'si' ? 'උදව් ඕනද? 👋 මගෙන් අහන්න!' : 'Need help? 👋 Ask me anything!'}`;
+      document.body.appendChild(bubble);
+      const dismiss = () => { bubble.remove(); localStorage.setItem('ccs-chat-proactive-dismissed', '1'); };
+      bubble.querySelector('.close-x').addEventListener('click', (e) => { e.stopPropagation(); dismiss(); });
+      bubble.addEventListener('click', () => { dismiss(); fab.click(); });
+      setTimeout(() => { if (document.body.contains(bubble)) dismiss(); }, 12000);
+    }, 25000);
+  })();
 
   (function initChatFabDrag() {
     const fab = document.getElementById('chatFab');
