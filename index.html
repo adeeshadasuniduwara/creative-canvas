@@ -4564,7 +4564,7 @@
           ? `හොඳයි! "${btn.dataset.occasion}" කියන section එකේ ඔබට ගැලපෙන packages තියෙනවා — පහළ Packages එකට scroll කරලා බලන්න!`
           : `Great choice! Head to the "${btn.dataset.occasion}" section under Packages — that's exactly what fits. Scroll down to take a look!`;
         addChatMsg(msg, 'bot');
-        document.getElementById('packages')?.scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
         document.getElementById('chatWindow').classList.remove('open');
       });
     });
