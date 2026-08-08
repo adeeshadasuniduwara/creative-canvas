@@ -8,7 +8,7 @@
   // (unless the URL itself points to a section, e.g. a #calendar link).
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 </script>
-<title>Creative Canvas Studio | Photography · Videography · Dronography · Editing</title>
+<title>Creative Canvas Studio | Wedding & Event Photography, Videography, Drone Coverage in Colombo, Kandy, Sri Lanka</title>
 <!-- 🔧 Google Analytics — replace G-QNV9N86WYD with your real Measurement ID from analytics.google.com, or delete this block if you don't want analytics. -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-QNV9N86WYD"></script>
 <script>
@@ -19,7 +19,7 @@
     gtag('config', 'G-QNV9N86WYD');
   }
 </script>
-<meta name="description" content="Creative Canvas Studio — professional photography, videography, dronography and editing in Sri Lanka. We visualize. We create. We inspire.">
+<meta name="description" content="Creative Canvas Studio — professional wedding & event photography, videography, drone (dronography) and editing services across Sri Lanka, including Colombo, Kandy, and Galle. Sri Lanka's first all-in-one online booking studio.">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
@@ -44,6 +44,12 @@
     "addressCountry": "LK"
   },
   "description": "Photography, videography, dronography and editing studio based in Sri Lanka.",
+  "areaServed": [
+    { "@type": "City", "name": "Colombo" },
+    { "@type": "City", "name": "Kandy" },
+    { "@type": "City", "name": "Galle" },
+    { "@type": "Country", "name": "Sri Lanka" }
+  ],
   "sameAs": []
 }
 </script>
@@ -432,6 +438,13 @@
   /* ---------- Contact ---------- */
   .contact-box{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:56px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center;position:relative;overflow:hidden;}
   .contact-box::after{content:'';position:absolute;bottom:-120px;right:-120px;width:320px;height:320px;background:radial-gradient(circle, rgba(255,176,32,0.15), transparent 65%);}
+  .faq-item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;transition:border-color .2s;}
+  .faq-item:hover{border-color:var(--pink);}
+  .faq-item h3{font-size:14.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .faq-item .faq-chevron{transition:transform .25s;flex-shrink:0;color:var(--muted);}
+  .faq-item.open .faq-chevron{transform:rotate(180deg);}
+  .faq-item .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease;color:var(--muted);font-size:13.5px;line-height:1.7;}
+  .faq-item.open .faq-answer{max-height:300px;margin-top:10px;}
   .contact-box h2{font-size:clamp(24px,3vw,32px);font-weight:700;margin-bottom:12px;}
   .contact-box p{color:var(--muted);font-size:15.5px;max-width:420px;line-height:1.7;overflow-wrap:anywhere;}
   .contact-actions{display:flex;flex-direction:column;gap:14px;position:relative;z-index:1;min-width:0;}
@@ -771,19 +784,6 @@
 </head>
 <body>
 
-<div id="authGate">
-  <div class="auth-gate-bg"></div>
-  <div class="auth-gate-content">
-    <div class="auth-gate-logo-wrap"><img src="assets/logo.jpg" alt="Creative Canvas Studio" class="auth-gate-logo"></div>
-    <h1>Creative Canvas Studio</h1>
-    <p>Sri Lanka's first all-in-one online booking studio. Sign in or create a free account to explore our work, book a session, and track your orders.</p>
-    <div class="auth-gate-ctas">
-      <button type="button" class="btn btn-primary" id="gateSignInBtn">Sign In</button>
-      <button type="button" class="btn btn-outline" id="gateSignUpBtn">Create Account</button>
-    </div>
-  </div>
-</div>
-
 <div id="adminWarningBanner" style="display:none;"></div>
 
 <header>
@@ -801,6 +801,7 @@
       <a href="#team" data-i18n="navTeam">Team</a>
       <a href="#leaderboard" data-i18n="navLeaderboard" id="navLeaderboardLink" style="display:none;">Leaderboard</a>
       <a href="#calendar" data-i18n="navCalendar">Calendar</a>
+      <a href="#faq">FAQ</a>
       <a href="#contact" data-i18n="navContact">Contact</a>
       <a href="https://wa.me/94717935537" class="nav-cta" target="_blank" rel="noopener" data-i18n="navBook">Book on WhatsApp</a>
       <button type="button" class="theme-toggle-btn" id="langToggleBtn" aria-label="Toggle language" style="font-size:11px;font-weight:700;">EN</button>
@@ -992,6 +993,7 @@
       <span class="kicker" data-i18n="kickerAbout">About Us</span>
       <h2 style="font-size:clamp(24px,3vw,32px);font-weight:700;margin-bottom:18px;">One studio, every visual craft.</h2>
       <p>Creative Canvas Studio brings photography, videography, drone work and editing under one roof, so clients get a consistent look across every deliverable instead of piecing it together from different vendors.</p>
+      <p>We're based in Sri Lanka and shoot weddings, events, and commercial projects island-wide — including Colombo, Kandy, and Galle — as Sri Lanka's first all-in-one online booking studio.</p>
       <p>Every project runs through the same standard: creative work, a professional team, genuine passion for quality, and delivery on time — every time.</p>
     </div>
   </div>
@@ -1087,6 +1089,17 @@
       <div class="why-item reveal"><h4>Passion &amp; Quality</h4><p>We care about the details others skip.</p></div>
       <div class="why-item reveal"><h4>On Time Delivery</h4><p>Your deadline is our deadline.</p></div>
     </div>
+  </div>
+</section>
+
+<section id="faq" style="background:var(--bg-alt);border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">FAQ</span>
+      <h2>Common questions, answered.</h2>
+      <p>Everything you need to know about booking photography, videography, dronography, and editing with us in Sri Lanka.</p>
+    </div>
+    <div id="faqList" style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px;"></div>
   </div>
 </section>
 
@@ -1574,6 +1587,12 @@
 
 <div id="greetToast"></div>
 
+<!-- AI-generated professional voice (Piper neural TTS) — same consistent voice for every visitor,
+     instead of relying on each browser's own built-in (often robotic) speech engine. -->
+<audio id="welcomeVoiceAudio" preload="auto">
+  <source src="assets/welcome-voice.mp3" type="audio/mpeg">
+</audio>
+
 <!-- 🔧 Background music — add your own royalty-free/copyright-free instrumental track (no vocals) at assets/background-music.mp3.
      Good free sources: pixabay.com/music (free, no attribution needed), YouTube Audio Library, freemusicarchive.org (check license). -->
 <audio id="bgMusic" loop preload="auto">
@@ -1759,10 +1778,6 @@
     firebaseReady = firebaseConfig.apiKey !== "YOUR_API_KEY";
   } catch (e) {
     firebaseReady = false;
-  }
-  if (!firebaseReady) {
-    const gate = document.getElementById('authGate');
-    if (gate) gate.style.display = 'none';
   }
 
   const ADMIN_EMAIL = 'adeeshadasuniduwara@gmail.com';
@@ -2164,36 +2179,19 @@
       localStorage.setItem('ccs-welcome-speech', JSON.stringify({ date: today, count }));
     } catch (e) { /* non-critical */ }
   }
-  function pickBestVoice(voices) {
-    const qualityKeywords = ['Natural', 'Premium', 'Enhanced', 'Neural', 'Online'];
-    const goodNames = ['Daniel', 'Alex', 'Guy', 'Christopher', 'Ryan', 'Google UK English Male', 'Google US English'];
-    let candidates = voices.filter(v => v.lang && v.lang.startsWith('en'));
-    let best = candidates.find(v => qualityKeywords.some(k => v.name.includes(k)) && goodNames.some(n => v.name.includes(n)));
-    if (best) return best;
-    best = candidates.find(v => qualityKeywords.some(k => v.name.includes(k)));
-    if (best) return best;
-    best = candidates.find(v => goodNames.some(n => v.name.includes(n)));
-    if (best) return best;
-    return candidates.find(v => v.lang === 'en-US' || v.lang === 'en-GB') || candidates[0] || null;
-  }
 
+  // A single professionally AI-generated voice file (assets/welcome-voice.mp3) plays for
+  // everyone — consistent quality everywhere, instead of each browser's own robotic voice.
   function playWelcomeSpeech() {
-    if (!('speechSynthesis' in window)) return;
     if (!canPlayWelcomeSpeechToday()) return;
+    const audio = document.getElementById('welcomeVoiceAudio');
+    if (!audio) return;
     try {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(welcomeSpeechText);
-      utter.rate = 0.92;
-      utter.pitch = 0.96;
-      utter.volume = 1;
-      const voices = window.speechSynthesis.getVoices();
-      const bestVoice = pickBestVoice(voices);
-      if (bestVoice) utter.voice = bestVoice;
-      utter.onend = hideSpeechMuteButton;
-      utter.onerror = hideSpeechMuteButton;
-      window.speechSynthesis.speak(utter);
-      recordWelcomeSpeechPlay();
-      showSpeechMuteButton();
+      audio.currentTime = 0;
+      audio.play().then(() => {
+        recordWelcomeSpeechPlay();
+        showSpeechMuteButton();
+      }).catch(() => { /* autoplay blocked — first-interaction fallback below will retry */ });
     } catch (e) { /* non-critical */ }
   }
 
@@ -2205,21 +2203,20 @@
     const btn = document.getElementById('speechMuteBtn');
     if (btn) btn.style.display = 'none';
   }
+  document.getElementById('welcomeVoiceAudio')?.addEventListener('ended', hideSpeechMuteButton);
   document.getElementById('speechMuteBtn')?.addEventListener('click', () => {
-    window.speechSynthesis.cancel();
+    const audio = document.getElementById('welcomeVoiceAudio');
+    if (audio) { audio.pause(); audio.currentTime = 0; }
     hideSpeechMuteButton();
   });
 
-  // Play the welcome speech once per page load too (in addition to login/signup), voices load async in some browsers
-  function tryAutoPlayOnLoad() {
-    if (window.speechSynthesis.getVoices().length) { playWelcomeSpeech(); }
-    else { window.speechSynthesis.onvoiceschanged = () => playWelcomeSpeech(); }
-  }
-  if ('speechSynthesis' in window) tryAutoPlayOnLoad();
-  // Safety net: many browsers block audio (including speech) from starting without a user
-  // gesture first. If that happens, play it on the very first tap/click/key press instead.
+  // Try to play on page load too (in addition to login/signup)
+  playWelcomeSpeech();
+  // Safety net: browsers block audio from starting without a user gesture first —
+  // if that happens, play it on the very first tap/click/key press instead.
   function firstInteractionSpeechFallback() {
-    if (canPlayWelcomeSpeechToday() && window.speechSynthesis.speaking === false && window.speechSynthesis.pending === false) {
+    const audio = document.getElementById('welcomeVoiceAudio');
+    if (canPlayWelcomeSpeechToday() && audio && audio.paused) {
       playWelcomeSpeech();
     }
     ['click', 'touchstart', 'keydown'].forEach(evt => document.removeEventListener(evt, firstInteractionSpeechFallback));
@@ -2382,7 +2379,6 @@
         userNameLabel.textContent = label;
         setAvatarDisplay(userAvatar, user.photoURL || null, label.charAt(0).toUpperCase());
         reviewSignedOut.style.display = 'none';
-        document.getElementById('authGate').style.display = 'none';
         reviewFormEl.style.display = 'flex';
         document.getElementById('revName').value = user.displayName || label;
 
@@ -2439,7 +2435,6 @@
         currentUserIsOwner = false;
         bindCalendarAdminClicks();
         applyReferralVisibility();
-        document.getElementById('authGate').style.display = 'flex';
       }
     });
   }
@@ -4001,13 +3996,56 @@
       members.sort((a, b) => (b.isOwner ? 1 : 0) - (a.isOwner ? 1 : 0));
       grid.innerHTML = members.map(t => `
         <div class="team-card ${t.isOwner ? 'owner' : ''} reveal in-view">
-          <div class="team-avatar"><div class="team-avatar-inner"><img src="${t.image}" alt="${escapeHtml(t.name || '')}"></div></div>
+          <div class="team-avatar"><div class="team-avatar-inner"><img src="${t.image}" alt="${escapeHtml(t.name || 'Team member')}, ${escapeHtml(t.role || '')} at Creative Canvas Studio" loading="lazy"></div></div>
           <h3>${escapeHtml(t.name || '')}</h3>
           <span class="team-role">${escapeHtml(t.role || '')}</span>
         </div>`).join('');
     } catch (err) { /* leave placeholder */ }
   }
   if (firebaseReady) loadTeam();
+
+  /* ---------------- FAQ section — also doubles as SEO content + FAQPage schema ---------------- */
+  const faqData = [
+    { q: 'How much does photography or videography cost in Sri Lanka?', a: "Pricing depends on the package and coverage hours — see our Packages section for exact rates in Rs., from personal shoots and birthdays to full-day weddings. Live USD/USDT conversion is shown too, and every price is upfront with no hidden fees." },
+    { q: 'Do you offer wedding photography in Colombo, Kandy, and across Sri Lanka?', a: "Yes — we cover weddings, engagements, and events island-wide, including Colombo, Kandy, Galle, and other cities across Sri Lanka. Our team travels for shoots; just let us know your event location when you book." },
+    { q: 'How do I book a photographer or videographer with Creative Canvas Studio?', a: 'Pick a package under Packages, add it to your cart, fill in your event date, time, and location, then checkout. You can pay an advance online or discuss payment with us directly — your booking is saved automatically the moment you checkout.' },
+    { q: 'Do you provide drone (aerial) photography and videography?', a: "Yes, we offer dronography for weddings, real estate, commercial shoots, and events — see the Commercial, Food & Drone section under Packages for pricing." },
+    { q: 'How long does it take to receive edited photos and videos?', a: "Turnaround time varies by package and season, but we always confirm an estimated delivery timeline when your booking is finalized. Once your files are ready and fully paid, you'll get a direct Google Drive download link in your account." },
+    { q: 'Is an advance payment required to confirm a booking?', a: "For most bookings, yes — an advance secures your date. You can pay via Binance Pay or bank transfer (NSB / Bank of Ceylon) directly in the cart, or discuss a custom arrangement with our team on WhatsApp." },
+    { q: 'What is your cancellation and refund policy?', a: 'Advance payments are refundable if you cancel more than 7 days before your event. Full details are in our Terms of Service, linked in the footer.' },
+    { q: "Is Creative Canvas Studio really Sri Lanka's first all-in-one online booking studio?", a: 'Yes — we built Sri Lanka\'s first fully online booking platform for photography, videography, dronography, and editing, so you can browse packages, check live availability, and book everything in one place without back-and-forth calls.' }
+  ];
+
+  function renderFAQ() {
+    const list = document.getElementById('faqList');
+    if (!list) return;
+    list.innerHTML = faqData.map((f, i) => `
+      <div class="faq-item" data-faq-index="${i}">
+        <h3>${escapeHtml(f.q)} <svg class="faq-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></h3>
+        <div class="faq-answer">${escapeHtml(f.a)}</div>
+      </div>`).join('');
+    list.querySelectorAll('.faq-item').forEach(item => {
+      item.addEventListener('click', () => item.classList.toggle('open'));
+    });
+
+    // Structured data so Google can show these as rich FAQ results / featured snippets
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqData.map(f => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a }
+      }))
+    };
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'faqSchema';
+    script.textContent = JSON.stringify(schema);
+    document.getElementById('faqSchema')?.remove();
+    document.head.appendChild(script);
+  }
+  renderFAQ();
 
   document.getElementById('adminProductForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -4123,7 +4161,7 @@
               <div class="product-card reveal in-view">
                 ${p.image ? `
                   <div class="product-img-wrap">
-                    <img class="product-img" src="${p.image}" alt="${escapeHtml(p.name || '')}">
+                    <img class="product-img" src="${p.image}" alt="${escapeHtml(p.name || 'Package')} — Creative Canvas Studio photography package in Sri Lanka" loading="lazy">
                     <button type="button" class="view-image-btn" data-view-img="${p.image}" aria-label="View full image">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                       View
@@ -4149,8 +4187,39 @@
       document.querySelectorAll('[data-view-img]').forEach(btn => {
         btn.addEventListener('click', () => openImageLightbox(btn.dataset.viewImg, false));
       });
+
+      // Product structured data — helps packages show pricing directly in Google search results
+      const allProducts = [];
+      sectionOrder.forEach(sec => grouped[sec].forEach(p => allProducts.push(p)));
+      const productSchema = allProducts.filter(p => p.tiers && p.tiers.length).map(p => {
+        const prices = p.tiers.map(t => t.price);
+        return {
+          '@type': 'Product',
+          name: p.name || 'Package',
+          description: p.description || `${p.name} — professional photography/videography package from Creative Canvas Studio, Sri Lanka.`,
+          image: p.image || undefined,
+          brand: { '@type': 'Brand', name: 'Creative Canvas Studio' },
+          offers: {
+            '@type': 'AggregateOffer',
+            priceCurrency: 'LKR',
+            lowPrice: Math.min(...prices),
+            highPrice: Math.max(...prices),
+            availability: 'https://schema.org/InStock'
+          }
+        };
+      });
+      if (productSchema.length) {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.id = 'productSchema';
+        script.textContent = JSON.stringify(productSchema);
+        document.getElementById('productSchema')?.remove();
+        document.head.appendChild(script);
+      }
+
       document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+          if (!currentUser) { addToCart(btn.dataset.id, btn.dataset.name, parseFloat(btn.dataset.price)); return; }
           addToCart(btn.dataset.id, btn.dataset.name, parseFloat(btn.dataset.price));
           const original = btn.innerHTML;
           btn.innerHTML = '<b>Added! ✓</b>';
@@ -4186,7 +4255,7 @@
         const item = document.createElement('div');
         item.className = 'portfolio-item reveal in-view';
         item.innerHTML = `
-          <img src="${p.image || ''}" alt="${escapeHtml(p.caption || 'Portfolio work')}">
+          <img src="${p.image || ''}" alt="${escapeHtml(p.caption || 'Portfolio work')} — Creative Canvas Studio photography and videography portfolio, Sri Lanka" loading="lazy">
           ${isVideo ? `<div class="play-badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.35)"/><path d="M10 8l6 4-6 4z"/></svg></div>` : ''}
           ${p.caption ? `<div class="p-caption">${escapeHtml(p.caption)}</div>` : ''}
         `;
@@ -4266,6 +4335,11 @@
   }
 
   function addToCart(id, name, price) {
+    if (!currentUser) {
+      showGreetToast('👋 Please sign in first — it only takes a moment, then you can add packages to your cart!');
+      openAuthModal();
+      return;
+    }
     const existing = cart.find(i => i.id === id);
     if (existing) existing.qty += 1;
     else cart.push({ id, name, price, qty: 1 });
@@ -5574,7 +5648,7 @@
             <button type="button" class="review-delete-btn owner-only-el" data-id="${docSnap.id}" style="display:none;" title="Delete review">🗑️</button>
           </div>
           <p class="review-comment">${escapeHtml(d.comment || '')}</p>
-          ${d.image ? `<img class="review-img" src="${d.image}" alt="Screenshot shared by ${escapeHtml(d.name || 'client')}" style="cursor:zoom-in;" data-review-img="${d.image}">` : ''}
+          ${d.image ? `<img class="review-img" src="${d.image}" alt="Screenshot shared by ${escapeHtml(d.name || 'client')}" style="cursor:zoom-in;" data-review-img="${d.image}" loading="lazy">` : ''}
         `;
         reviewsList.appendChild(card);
       });
