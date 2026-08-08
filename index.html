@@ -515,6 +515,19 @@
   .product-card:hover{transform:translateY(-8px) scale(1.015);border-color:transparent;box-shadow:0 22px 45px -15px rgba(255,61,119,0.35), 0 0 0 1.5px var(--pink);}
   .product-img{width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--bg-alt);transition:transform .5s;}
   .product-card:hover .product-img{transform:scale(1.07);}
+  .product-img-wrap{position:relative;overflow:hidden;}
+  .view-image-btn{
+    position:absolute;top:12px;right:12px;z-index:2;display:flex;align-items:center;gap:6px;
+    background:rgba(10,10,13,0.72);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.25);
+    color:#fff;font-size:11.5px;font-weight:700;padding:8px 13px;border-radius:100px;cursor:pointer;
+    font-family:'Inter';animation:viewBtnPulse 2.2s ease-in-out infinite;
+  }
+  .view-image-btn svg{width:14px;height:14px;flex-shrink:0;}
+  .view-image-btn:hover{background:var(--pink);border-color:var(--pink);animation:none;transform:scale(1.06);}
+  @keyframes viewBtnPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(255,61,119,0.5);}
+    50%{box-shadow:0 0 0 8px rgba(255,61,119,0);}
+  }
   .product-body{padding:18px;}
   .product-body h3{font-size:15.5px;font-weight:700;margin-bottom:4px;}
   .product-body p{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5;}
@@ -4029,7 +4042,14 @@
               const tiers = p.tiers && p.tiers.length ? p.tiers : (p.price ? [{ label: p.category || 'Price', price: p.price }] : []);
               return `
               <div class="product-card reveal in-view">
-                ${p.image ? `<img class="product-img" src="${p.image}" alt="${escapeHtml(p.name || '')}">` : `<div class="product-img"></div>`}
+                ${p.image ? `
+                  <div class="product-img-wrap">
+                    <img class="product-img" src="${p.image}" alt="${escapeHtml(p.name || '')}">
+                    <button type="button" class="view-image-btn" data-view-img="${p.image}" aria-label="View full image">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      View
+                    </button>
+                  </div>` : `<div class="product-img"></div>`}
                 <div class="product-body">
                   <h3>${escapeHtml(p.name || 'Package')}</h3>
                   ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ''}
@@ -4047,6 +4067,9 @@
             }).join('')}
           </div>
         </div>`).join('');
+      document.querySelectorAll('[data-view-img]').forEach(btn => {
+        btn.addEventListener('click', () => openImageLightbox(btn.dataset.viewImg, false));
+      });
       document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           addToCart(btn.dataset.id, btn.dataset.name, parseFloat(btn.dataset.price));
