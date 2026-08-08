@@ -3622,15 +3622,17 @@
     const file = e.target.files[0];
     if (!file) return;
     const status = document.getElementById('prodImageStatus');
-    status.textContent = 'Compressing…';
+    status.textContent = 'Preparing…';
     try {
-      const dataUrl = await compressImageFile(file, 1000, 0.88);
-      selectedProductImage = dataUrl;
-      document.getElementById('prodImagePreview').src = dataUrl;
-      document.getElementById('prodImagePreview').style.display = 'block';
-      status.textContent = 'Ready to add';
-      // Save to gallery for reuse on future packages
-      try { await addDoc(packageImagesCol, { image: dataUrl, createdAt: serverTimestamp() }); } catch (e2) { /* non-critical */ }
+      const rawDataUrl = await compressImageFile(file, 1200, 0.92);
+      status.textContent = '';
+      openImageCropper(rawDataUrl, async (finalDataUrl) => {
+        selectedProductImage = finalDataUrl;
+        document.getElementById('prodImagePreview').src = finalDataUrl;
+        document.getElementById('prodImagePreview').style.display = 'block';
+        status.textContent = 'Ready to add';
+        try { await addDoc(packageImagesCol, { image: finalDataUrl, createdAt: serverTimestamp() }); } catch (e2) { /* non-critical */ }
+      });
     } catch (err) {
       status.textContent = 'Could not process image.';
     }
@@ -3664,11 +3666,13 @@
               } catch (e) { alert('Could not update image.'); }
             });
           } else if (changeImageTargetId) {
-            try {
-              await updateDoc(doc(db, collName, changeImageTargetId), { image: docSnap.data().image });
-              modal.style.display = 'none';
-              loadAdminProducts(); loadShopProducts();
-            } catch (e) { alert('Could not update image.'); }
+            modal.style.display = 'none';
+            openImageCropper(docSnap.data().image, async (finalDataUrl) => {
+              try {
+                await updateDoc(doc(db, collName, changeImageTargetId), { image: finalDataUrl });
+                loadAdminProducts(); loadShopProducts();
+              } catch (e) { alert('Could not update image.'); }
+            });
           } else if (galleryPickerMode === 'team') {
             modal.style.display = 'none';
             openImageCropper(docSnap.data().image, (finalDataUrl) => {
@@ -3678,11 +3682,13 @@
               document.getElementById('teamImageStatus').textContent = 'Ready to add';
             });
           } else {
-            selectedProductImage = docSnap.data().image;
-            document.getElementById('prodImagePreview').src = selectedProductImage;
-            document.getElementById('prodImagePreview').style.display = 'block';
-            document.getElementById('prodImageStatus').textContent = 'Ready to add';
             modal.style.display = 'none';
+            openImageCropper(docSnap.data().image, (finalDataUrl) => {
+              selectedProductImage = finalDataUrl;
+              document.getElementById('prodImagePreview').src = finalDataUrl;
+              document.getElementById('prodImagePreview').style.display = 'block';
+              document.getElementById('prodImageStatus').textContent = 'Ready to add';
+            });
           }
         });
         grid.appendChild(img);
