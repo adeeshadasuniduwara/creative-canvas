@@ -1406,7 +1406,11 @@
 <div class="modal-overlay" id="galleryPickerModal" style="display:none;">
   <div class="modal-card" style="max-width:520px;">
     <button class="modal-close" id="galleryPickerClose" aria-label="Close">&times;</button>
-    <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;">Choose an Image</h3>
+    <h3 style="font-size:18px;font-weight:700;margin-bottom:14px;">Choose an Image</h3>
+    <label class="file-label" style="display:inline-flex;align-items:center;gap:8px;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 16px;cursor:pointer;font-size:13px;margin-bottom:16px;">
+      📤 Upload New Image
+      <input type="file" id="galleryUploadNewInput" accept="image/*" style="display:none;">
+    </label>
     <div id="galleryPickerGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-height:60vh;overflow-y:auto;"></div>
   </div>
 </div>
@@ -3703,6 +3707,40 @@
   document.getElementById('prodGalleryBtn')?.addEventListener('click', () => openGalleryPicker(null, 'product'));
   document.getElementById('teamGalleryBtn')?.addEventListener('click', () => openGalleryPicker(null, 'team'));
   document.getElementById('galleryPickerClose')?.addEventListener('click', () => { document.getElementById('galleryPickerModal').style.display = 'none'; });
+
+  document.getElementById('galleryUploadNewInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+    try {
+      const rawDataUrl = await compressImageFile(file, 1200, 0.92);
+      document.getElementById('galleryPickerModal').style.display = 'none';
+      openImageCropper(rawDataUrl, async (finalDataUrl) => {
+        // Always add the freshly-cropped image to the shared gallery, for reuse next time too
+        try { await addDoc(packageImagesCol, { image: finalDataUrl, createdAt: serverTimestamp() }); } catch (e2) { /* non-critical */ }
+        const targetCollection = galleryPickerMode === 'team' ? 'team' : 'products';
+        if (changeImageTargetId) {
+          try {
+            await updateDoc(doc(db, targetCollection, changeImageTargetId), { image: finalDataUrl });
+            if (galleryPickerMode === 'team') { loadAdminTeam(); loadTeam(); }
+            else { loadAdminProducts(); loadShopProducts(); }
+          } catch (err) { alert('Could not update image.'); }
+        } else if (galleryPickerMode === 'team') {
+          selectedTeamImage = finalDataUrl;
+          document.getElementById('teamImagePreview').src = finalDataUrl;
+          document.getElementById('teamImagePreview').style.display = 'block';
+          document.getElementById('teamImageStatus').textContent = 'Ready to add';
+        } else {
+          selectedProductImage = finalDataUrl;
+          document.getElementById('prodImagePreview').src = finalDataUrl;
+          document.getElementById('prodImagePreview').style.display = 'block';
+          document.getElementById('prodImageStatus').textContent = 'Ready to add';
+        }
+      });
+    } catch (err) {
+      alert('Could not process that image.');
+    }
+  });
   document.getElementById('galleryPickerModal')?.addEventListener('click', (e) => { if (e.target.id === 'galleryPickerModal') e.target.style.display = 'none'; });
 
   /* ---------------- Image Cropper (drag to position, slider to zoom, then crop to a clean square) ---------------- */
