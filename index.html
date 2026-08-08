@@ -707,6 +707,7 @@
   .admin-order-row .info{flex:1;min-width:0;}
   .admin-order-row .info b{display:block;font-size:13px;margin-bottom:2px;overflow-wrap:anywhere;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .admin-order-row .info span{color:var(--muted);font-size:11px;line-height:1.4;display:block;overflow-wrap:anywhere;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #adminProductsList .info b, #adminProductsList .info span{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;}
   .admin-order-row .actions{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;}
   .mini-btn{font-size:11.5px;padding:8px 14px;border-radius:100px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;font-family:'Inter';font-weight:600;white-space:nowrap;line-height:1.3;}
   .mini-btn:hover{border-color:var(--blue);}
@@ -1277,7 +1278,7 @@
       </form>
       <p style="color:var(--muted);font-size:12.5px;margin:-10px 0 20px;">Sections are just plain text — type any name (with an emoji if you like) and packages with the same section text automatically group together on the site.</p>
       <h4 style="font-size:14px;color:var(--muted);margin-bottom:12px;">All Packages</h4>
-      <div id="adminProductsList" class="admin-list-grid"></div>
+      <div id="adminProductsList" class="admin-list-grid" style="grid-template-columns:1fr;"></div>
     </div>
     <div id="adminPortfolioView" style="display:none;">
       <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Add finished work to the public Portfolio gallery. Leave "Video URL" blank for a photo tile, or add a YouTube/Vimeo link for a video tile (thumbnail image still required).</p>
@@ -3539,6 +3540,7 @@
       list.querySelectorAll('[data-action="edit-product"]').forEach(btn => {
         btn.addEventListener('click', () => openEditPackageModal(btn.dataset.id));
       });
+      compactifyRowActions('adminProductsList');
     } catch (err) {
       list.innerHTML = '<p style="color:var(--pink);font-size:13px;">Could not load packages.</p>';
     }
