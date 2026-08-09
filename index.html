@@ -71,22 +71,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-  // 🔧 PASTE YOUR EMAILJS PUBLIC KEY / SERVICE ID / TEMPLATE IDs HERE (see FIREBASE-SETUP.md)
-  window.EMAILJS_PUBLIC_KEY = "w8y6LpVMilVlwZ67D";
-  window.EMAILJS_SERVICE_ID = "service_thqgwvv";
-  window.EMAILJS_OTP_TEMPLATE_ID = "template_r0269wb";
-  window.EMAILJS_PAYMENT_TEMPLATE_ID = "YOUR_EMAILJS_PAYMENT_TEMPLATE_ID";
-  window.EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID = "YOUR_EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID";
-  window.EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID = "YOUR_EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID";
-  window.EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID = "YOUR_EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID";
-  window.EMAILJS_ORDER_READY_TEMPLATE_ID = "YOUR_EMAILJS_ORDER_READY_TEMPLATE_ID";
-  if (window.emailjs && window.EMAILJS_PUBLIC_KEY !== "YOUR_EMAILJS_PUBLIC_KEY") {
-    window.emailjs.init({ publicKey: window.EMAILJS_PUBLIC_KEY });
-  }
+  // 🔧 PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE (see email-backend/Code.gs setup instructions)
+  window.EMAIL_BACKEND_URL = "https://script.google.com/macros/s/AKfycbxQUroW_E-67uN6epmtnoazng2Qh4217MORsAOOLjLbaisEx8eitkRLYYoVICqpDuWj/exec";
+
+  window.sendBackendEmail = function (type, payload) {
+    if (!window.EMAIL_BACKEND_URL || window.EMAIL_BACKEND_URL === "PASTE_YOUR_APPS_SCRIPT_URL_HERE") {
+      console.warn('Email backend not configured yet — see email-backend/Code.gs');
+      return Promise.resolve();
+    }
+    return fetch(window.EMAIL_BACKEND_URL, {
+      method: 'POST',
+      body: JSON.stringify({ type, ...payload })
+    }).catch((e) => console.error('Email send failed:', e));
+  };
 </script>
 <style>
+
   :root{
     --bg:#07070a;
     --bg-alt:#0f0f14;
@@ -1789,7 +1790,7 @@
   const packageImagesCol = firebaseReady ? collection(db, "packageImages") : null;
   const waitlistCol = firebaseReady ? collection(db, "waitlist") : null;
   const activityLogCol = firebaseReady ? collection(db, "activityLog") : null;
-  const emailjsReady = window.EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY' && !!window.emailjs;
+  const emailjsReady = window.EMAIL_BACKEND_URL !== 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
 
   const reviewsList = document.getElementById('reviewsList');
   const formMsg = document.getElementById('formMsg');
@@ -1885,8 +1886,8 @@
   async function sendPendingCode(token, email, code) {
     await setDoc(doc(db, 'pendingSignups', token), { code, email, createdAt: serverTimestamp() });
     if (emailjsReady) {
-      try { await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_OTP_TEMPLATE_ID, { to_email: email, email: email, otp_code: code }); }
-      catch (e) { console.error('EmailJS send failed:', e); }
+      try { await window.sendBackendEmail('otp', { to_email: email, otp_code: code }); }
+      catch (e) { console.error('Email send failed:', e); }
     } else {
       console.warn('EmailJS not configured — signup code for testing:', code);
     }
@@ -2304,8 +2305,8 @@
     await setDoc(doc(db, 'otpCodes', uid), { code, email, createdAt: serverTimestamp() });
     if (emailjsReady) {
       try {
-        await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_OTP_TEMPLATE_ID, { to_email: email, email: email, otp_code: code });
-      } catch (e) { console.error('EmailJS OTP send failed:', e); }
+        await window.sendBackendEmail('otp', { to_email: email, otp_code: code });
+      } catch (e) { console.error('Email OTP send failed:', e); }
     } else {
       console.warn('EmailJS not configured — OTP code for testing:', code);
     }
@@ -2466,24 +2467,15 @@
   referralModal?.addEventListener('click', (e) => { if (e.target === referralModal) closeReferralModal(); });
 
   async function sendReferralRequestEmail(name, email) {
-    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
-        && window.EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID && window.EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID !== "YOUR_EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID") {
-      try { await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID, { customer_name: name, customer_email: email }); }
-      catch (e) { console.error('Referral request email failed:', e); }
-    }
+    try { await window.sendBackendEmail('referral_request', { customer_name: name, customer_email: email }); }
+    catch (e) { console.error('Referral request email failed:', e); }
     // Auto-reply straight to the customer confirming we received their request
-    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
-        && window.EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID && window.EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID !== "YOUR_EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID") {
-      try { await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID, { to_email: email, email: email, customer_name: name }); }
-      catch (e) { console.error('Referral auto-reply email failed:', e); }
-    }
+    try { await window.sendBackendEmail('referral_request_autoreply', { to_email: email, customer_name: name }); }
+    catch (e) { console.error('Referral auto-reply email failed:', e); }
   }
   async function sendReferralApprovedEmail(email, name, link) {
-    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
-        && window.EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID && window.EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID !== "YOUR_EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID") {
-      try { await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID, { to_email: email, email: email, customer_name: name, referral_link: link }); }
-      catch (e) { console.error('Referral approved email failed:', e); }
-    }
+    try { await window.sendBackendEmail('referral_approved', { to_email: email, customer_name: name, referral_link: link }); }
+    catch (e) { console.error('Referral approved email failed:', e); }
   }
 
   function showReferralPopup(text) {
@@ -2811,23 +2803,13 @@
 
   function sendOrderReadyEmail(email, title) {
     if (!email) return;
-    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
-        && window.EMAILJS_ORDER_READY_TEMPLATE_ID && window.EMAILJS_ORDER_READY_TEMPLATE_ID !== "YOUR_EMAILJS_ORDER_READY_TEMPLATE_ID") {
-      window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_ORDER_READY_TEMPLATE_ID, {
-        to_email: email, email: email, order_title: title
-      }).catch((e) => console.error('Order-ready email failed:', e));
-    }
+    window.sendBackendEmail('order_ready', { to_email: email, order_title: title })
+      .catch((e) => console.error('Order-ready email failed:', e));
   }
 
   function notifyOwnerOfPayment(email, username) {
     // Notifies the owner by email when a customer submits payment proof.
-    // See FIREBASE-SETUP.md "Email Notifications" section for setup steps.
-    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
-        && window.EMAILJS_PAYMENT_TEMPLATE_ID && window.EMAILJS_PAYMENT_TEMPLATE_ID !== "YOUR_EMAILJS_PAYMENT_TEMPLATE_ID") {
-      window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_PAYMENT_TEMPLATE_ID, {
-        customer_email: email, customer_username: username
-      }).catch(() => {});
-    }
+    window.sendBackendEmail('payment_alert', { customer_email: email, customer_username: username }).catch(() => {});
   }
 
   const myOrdersModal = document.getElementById('myOrdersModal');
