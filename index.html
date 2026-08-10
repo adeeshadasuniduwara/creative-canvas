@@ -807,7 +807,14 @@
   .copy-btn:hover{border-color:var(--blue);}
   .copy-btn.copied{border-color:#4cd964;color:#4cd964;}
   .order-card .btn{width:100%;justify-content:center;margin-top:6px;}
-  #adminModalCard{max-width:760px;}
+  #adminModal{padding:0;align-items:stretch;justify-content:stretch;}
+  #adminModalCard{
+    max-width:none;width:100vw;height:100vh;max-height:100vh;border-radius:0;
+    padding:28px clamp(16px, 4vw, 48px);margin:0;
+  }
+  @media(max-width:480px){
+    #adminModalCard{padding:20px 16px;}
+  }
   .admin-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:26px;}
   .admin-form input{background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;}
   .admin-form input:focus{border-color:var(--blue);outline:none;}
@@ -3271,6 +3278,7 @@
 
   function openAdminPanelContent() {
     adminModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
     document.getElementById('adminOrderForm').style.display = currentUserIsAdmin ? 'grid' : 'none';
     document.getElementById('adminTabAdmins').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('adminTabProducts').style.display = currentUserIsAdmin ? 'inline-block' : 'none';
@@ -3423,8 +3431,8 @@
     setTimeout(() => { btn.textContent = original; }, 2500);
   });
 
-  document.getElementById('adminModalClose')?.addEventListener('click', () => { adminModal.style.display = 'none'; });
-  adminModal?.addEventListener('click', (e) => { if (e.target === adminModal) adminModal.style.display = 'none'; });
+  document.getElementById('adminModalClose')?.addEventListener('click', () => { adminModal.style.display = 'none'; document.body.style.overflow = ''; });
+  adminModal?.addEventListener('click', (e) => { if (e.target === adminModal) { adminModal.style.display = 'none'; document.body.style.overflow = ''; } });
 
   document.getElementById('toggleArchivedBtn')?.addEventListener('click', (e) => {
     const btn = e.target;
