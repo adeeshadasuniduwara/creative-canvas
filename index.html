@@ -106,42 +106,6 @@
     --sp-1:4px; --sp-2:8px; --sp-3:16px; --sp-4:24px; --sp-5:32px; --sp-6:48px;
   }
 
-  /* ---------------- Site Loading Screen (adapted from Uiverse.io by jeremy_4982) ---------------- */
-  #siteLoader{
-    position:fixed;inset:0;z-index:99999;background:var(--bg);
-    display:flex;align-items:center;justify-content:center;
-    transition:opacity .5s ease, visibility .5s ease;
-  }
-  #siteLoader.loader-hidden{opacity:0;visibility:hidden;pointer-events:none;}
-  @keyframes ccsDropAndShift{
-    0%{transform:translate(0px, 15px);}
-    16.67%{transform:translate(80px, 13px);}
-    33.34%{transform:translate(40px, 10px);}
-    50.01%{transform:translate(40px, -30px);}
-    66.68%{transform:translate(40px, 55px);}
-    83.35%{transform:translate(40px, 10px);}
-    100%{transform:translate(0px, 15px);}
-  }
-  #siteLoader .Strich1{
-    position:relative;width:130px;height:50px;background:var(--card);border:1px solid var(--line);
-    border-radius:25px;transform:rotate(45deg);box-shadow:0 4px 20px rgba(0,0,0,0.35);
-  }
-  #siteLoader .Strich2{
-    position:absolute;top:0;left:0;width:130px;height:50px;background:var(--card);border:1px solid var(--line);
-    border-radius:25px;transform:rotate(-90deg);box-shadow:0 4px 20px rgba(0,0,0,0.35);
-  }
-  #siteLoader .bubble, #siteLoader .bubble1, #siteLoader .bubble2, #siteLoader .bubble3, #siteLoader .bubble4{
-    position:absolute;top:0;width:20px;height:20px;border-radius:50%;animation:ccsDropAndShift 5s ease-in-out infinite;
-  }
-  #siteLoader .bubble{ left:15px; background:radial-gradient(circle at 30% 30%, #ffd27a, var(--gold), #e8951a); animation-duration:5s; z-index:1; }
-  #siteLoader .bubble1{ left:8px; background:radial-gradient(circle at 30% 30%, #ff8fb3, var(--pink), #d92c62); animation-duration:6s; z-index:2; }
-  #siteLoader .bubble2{ left:12px; background:radial-gradient(circle at 30% 30%, #c99bff, var(--purple), #6f21ba); animation-duration:4s; z-index:3; }
-  #siteLoader .bubble3{ left:10px; background:radial-gradient(circle at 30% 30%, #8fc7ff, var(--blue), #1f6fc4); animation-duration:7s; z-index:4; }
-  #siteLoader .bubble4{ left:6px; background:radial-gradient(circle at 30% 30%, #ffb3e6, var(--purple), var(--pink)); animation-duration:5.5s; z-index:5; }
-  @media (prefers-reduced-motion: reduce){
-    #siteLoader .bubble, #siteLoader .bubble1, #siteLoader .bubble2, #siteLoader .bubble3, #siteLoader .bubble4{ animation:none; }
-  }
-
   /* ---------------- Custom Scrollbar (brand gradient) ---------------- */
   html{scrollbar-width:thin;scrollbar-color:var(--pink) var(--bg-alt);}
   ::-webkit-scrollbar{width:11px;height:11px;}
@@ -996,18 +960,6 @@
 </style>
 </head>
 <body>
-
-<div id="siteLoader" aria-hidden="true">
-  <div class="Strich1">
-    <div class="Strich2">
-      <div class="bubble"></div>
-      <div class="bubble1"></div>
-      <div class="bubble2"></div>
-      <div class="bubble3"></div>
-      <div class="bubble4"></div>
-    </div>
-  </div>
-</div>
 
 <div id="adminWarningBanner" style="display:none;"></div>
 
@@ -6469,24 +6421,6 @@
       } catch (e) { /* non-critical */ }
     });
   }
-
-  // Hide the site loading screen once everything has loaded — with a small minimum
-  // display time so it doesn't just flash on fast connections.
-  (function hideSiteLoader() {
-    const loader = document.getElementById('siteLoader');
-    if (!loader) return;
-    const minTime = 700;
-    const start = Date.now();
-    function hide() {
-      const elapsed = Date.now() - start;
-      const wait = Math.max(0, minTime - elapsed);
-      setTimeout(() => loader.classList.add('loader-hidden'), wait);
-    }
-    if (document.readyState === 'complete') hide();
-    else window.addEventListener('load', hide);
-    // Safety net: never let it get stuck forever
-    setTimeout(() => loader.classList.add('loader-hidden'), 6000);
-  })();
 </script>
 
 </body>
