@@ -67,24 +67,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
 <!-- EmailJS — sends signup verification codes and notifies the owner of payment proofs. See FIREBASE-SETUP.md. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-  // 🔧 PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE (see email-backend/Code.gs setup instructions)
-  window.EMAIL_BACKEND_URL = "https://script.google.com/macros/s/AKfycbxQUroW_E-67uN6epmtnoazng2Qh4217MORsAOOLjLbaisEx8eitkRLYYoVICqpDuWj/exec";
-
-  window.sendBackendEmail = function (type, payload) {
-    if (!window.EMAIL_BACKEND_URL || window.EMAIL_BACKEND_URL === "PASTE_YOUR_APPS_SCRIPT_URL_HERE") {
-      console.warn('Email backend not configured yet — see email-backend/Code.gs');
-      return Promise.resolve();
-    }
-    return fetch(window.EMAIL_BACKEND_URL, {
-      method: 'POST',
-      body: JSON.stringify({ type, ...payload })
-    }).catch((e) => console.error('Email send failed:', e));
-  };
+  // 🔧 PASTE YOUR EMAILJS PUBLIC KEY / SERVICE ID / TEMPLATE IDs HERE (see FIREBASE-SETUP.md)
+  window.EMAILJS_PUBLIC_KEY = "w8y6LpVMilVlwZ67D";
+  window.EMAILJS_SERVICE_ID = "service_thqgwvv";
+  window.EMAILJS_OTP_TEMPLATE_ID = "template_r0269wb";
+  window.EMAILJS_PAYMENT_TEMPLATE_ID = "YOUR_EMAILJS_PAYMENT_TEMPLATE_ID";
+  window.EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID = "YOUR_EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID";
+  window.EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID = "YOUR_EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID";
+  window.EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID = "YOUR_EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID";
+  window.EMAILJS_ORDER_READY_TEMPLATE_ID = "YOUR_EMAILJS_ORDER_READY_TEMPLATE_ID";
+  if (window.emailjs && window.EMAILJS_PUBLIC_KEY !== "YOUR_EMAILJS_PUBLIC_KEY") {
+    window.emailjs.init({ publicKey: window.EMAILJS_PUBLIC_KEY });
+  }
 </script>
 <style>
 
@@ -153,6 +154,26 @@
   html[data-theme="light"] .mini-btn:hover{background:rgba(47,155,240,0.06);}
   html[data-theme="light"] ::selection{background:var(--pink);color:#fff;}
   .theme-toggle-btn{background:none;border:1px solid var(--line);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .notif-bell-wrap{position:relative;flex-shrink:0;}
+  #notifBellBtn{position:relative;}
+  #notifBellBtn svg{width:18px;height:18px;}
+  #notifBadge{
+    position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:10px;font-weight:700;
+    min-width:16px;height:16px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 4px;
+  }
+  #notifBellBtn.ringing{animation:bellRing .6s ease;}
+  @keyframes bellRing{0%,100%{transform:rotate(0);}20%{transform:rotate(-15deg);}40%{transform:rotate(13deg);}60%{transform:rotate(-8deg);}80%{transform:rotate(5deg);}}
+  .notif-dropdown{
+    display:none;position:absolute;right:0;top:46px;z-index:200;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;width:320px;max-width:calc(100vw - 32px);max-height:400px;overflow-y:auto;
+    box-shadow:0 20px 50px -12px rgba(0,0,0,0.5);
+  }
+  .notif-dropdown.open{display:block;}
+  .notif-dropdown-head{padding:14px 16px;font-size:13.5px;font-weight:700;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);}
+  .notif-item{padding:12px 16px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.5;}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item.unread{background:rgba(47,155,240,0.06);}
+  .notif-item .notif-time{display:block;color:var(--muted);font-size:11px;margin-top:3px;}
   .theme-toggle-btn svg{width:17px;height:17px;}
   *{margin:0;padding:0;box-sizing:border-box;}
 
@@ -810,6 +831,16 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
       </button>
       <a href="#" id="signInBtn" class="nav-cta">Sign In</a>
+      <div class="notif-bell-wrap" id="notifBellWrap" style="display:none;">
+        <button type="button" class="theme-toggle-btn" id="notifBellBtn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span id="notifBadge" style="display:none;">0</span>
+        </button>
+        <div class="notif-dropdown" id="notifDropdown">
+          <div class="notif-dropdown-head">Notifications</div>
+          <div id="notifList"><p style="color:var(--muted);font-size:13px;padding:16px;">No notifications yet.</p></div>
+        </div>
+      </div>
       <div class="user-badge" id="userBadge" style="display:none;">
         <span class="user-avatar" id="userAvatar">U</span>
         <span id="userNameLabel">Account</span>
@@ -1751,7 +1782,7 @@
 ============================================================ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc, runTransaction, Timestamp }
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc, runTransaction, Timestamp, limit }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -1784,13 +1815,14 @@
   const ADMIN_EMAIL = 'adeeshadasuniduwara@gmail.com';
   const ordersCol = firebaseReady ? collection(db, "orders") : null;
   const bookingRequestsCol = firebaseReady ? collection(db, "bookingRequests") : null;
+  const notificationsCol = firebaseReady ? collection(db, "notifications") : null;
   const productsCol = firebaseReady ? collection(db, "products") : null;
   const portfolioCol = firebaseReady ? collection(db, "portfolio") : null;
   const teamCol = firebaseReady ? collection(db, "team") : null;
   const packageImagesCol = firebaseReady ? collection(db, "packageImages") : null;
   const waitlistCol = firebaseReady ? collection(db, "waitlist") : null;
   const activityLogCol = firebaseReady ? collection(db, "activityLog") : null;
-  const emailjsReady = window.EMAIL_BACKEND_URL !== 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+  const emailjsReady = window.EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY' && !!window.emailjs;
 
   const reviewsList = document.getElementById('reviewsList');
   const formMsg = document.getElementById('formMsg');
@@ -1886,8 +1918,8 @@
   async function sendPendingCode(token, email, code) {
     await setDoc(doc(db, 'pendingSignups', token), { code, email, createdAt: serverTimestamp() });
     if (emailjsReady) {
-      try { await window.sendBackendEmail('otp', { to_email: email, otp_code: code }); }
-      catch (e) { console.error('Email send failed:', e); }
+      try { await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_OTP_TEMPLATE_ID, { to_email: email, email: email, otp_code: code }); }
+      catch (e) { console.error('EmailJS send failed:', e); }
     } else {
       console.warn('EmailJS not configured — signup code for testing:', code);
     }
@@ -2279,6 +2311,99 @@
     }
   });
 
+  /* ---------------- Notification System (bell + beep) ---------------- */
+  function playNotifBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = ctx.currentTime;
+      [0, 0.18].forEach((delay, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(i === 0 ? 880 : 1046.5, now + delay);
+        gain.gain.setValueAtTime(0, now + delay);
+        gain.gain.linearRampToValueAtTime(0.35, now + delay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.35);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.4);
+      });
+    } catch (e) { /* non-critical */ }
+  }
+
+  async function createNotification(recipientType, recipientKey, message) {
+    if (!firebaseReady) return;
+    try {
+      await addDoc(notificationsCol, {
+        recipientType, recipientEmail: recipientType === 'customer' ? recipientKey : null, message, read: false, createdAt: serverTimestamp()
+      });
+    } catch (e) { console.error('Could not create notification:', e); }
+  }
+
+  let notifUnsub = null;
+  let notifFirstSnapshot = true;
+  function startNotificationListener() {
+    if (!firebaseReady || !currentUser) return;
+    if (notifUnsub) notifUnsub();
+    notifFirstSnapshot = true;
+    const q = currentUserIsAdmin
+      ? query(notificationsCol, where('recipientType', '==', 'admin'), orderBy('createdAt', 'desc'), limit(30))
+      : query(notificationsCol, where('recipientType', '==', 'customer'), where('recipientEmail', '==', currentUser.email), orderBy('createdAt', 'desc'), limit(30));
+    document.getElementById('notifBellWrap').style.display = 'block';
+    notifUnsub = onSnapshot(q, (snap) => {
+      const items = [];
+      let unread = 0;
+      snap.forEach(d => { const n = d.data(); items.push({ id: d.id, ...n }); if (!n.read) unread++; });
+      renderNotifDropdown(items);
+      const badge = document.getElementById('notifBadge');
+      badge.textContent = unread;
+      badge.style.display = unread > 0 ? 'flex' : 'none';
+      if (!notifFirstSnapshot) {
+        snap.docChanges().forEach(change => {
+          if (change.type === 'added') {
+            playNotifBeep();
+            const btn = document.getElementById('notifBellBtn');
+            btn.classList.remove('ringing'); void btn.offsetWidth; btn.classList.add('ringing');
+          }
+        });
+      }
+      notifFirstSnapshot = false;
+    });
+  }
+  function stopNotificationListener() {
+    if (notifUnsub) { notifUnsub(); notifUnsub = null; }
+    document.getElementById('notifBellWrap').style.display = 'none';
+  }
+
+  function renderNotifDropdown(items) {
+    const list = document.getElementById('notifList');
+    if (!items.length) { list.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:16px;">No notifications yet.</p>'; return; }
+    list.innerHTML = items.map(n => {
+      const time = n.createdAt && n.createdAt.toDate ? n.createdAt.toDate().toLocaleString() : '';
+      return `<div class="notif-item ${n.read ? '' : 'unread'}">${escapeHtml(n.message)}<span class="notif-time">${time}</span></div>`;
+    }).join('');
+  }
+
+  document.getElementById('notifBellBtn')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const dropdown = document.getElementById('notifDropdown');
+    dropdown.classList.toggle('open');
+    if (dropdown.classList.contains('open') && firebaseReady && currentUser) {
+      // Mark all currently-listed notifications as read
+      try {
+        const q = currentUserIsAdmin
+          ? query(notificationsCol, where('recipientType', '==', 'admin'), where('read', '==', false))
+          : query(notificationsCol, where('recipientType', '==', 'customer'), where('recipientEmail', '==', currentUser.email), where('read', '==', false));
+        const snap = await getDocs(q);
+        snap.forEach(d => updateDoc(doc(db, 'notifications', d.id), { read: true }));
+      } catch (e2) { /* non-critical */ }
+    }
+  });
+  document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('notifDropdown');
+    if (dropdown && !e.target.closest('.notif-bell-wrap')) dropdown.classList.remove('open');
+  });
+
   function showGreetToast(msg) {
     const t = document.getElementById('greetToast');
     t.textContent = msg;
@@ -2305,8 +2430,8 @@
     await setDoc(doc(db, 'otpCodes', uid), { code, email, createdAt: serverTimestamp() });
     if (emailjsReady) {
       try {
-        await window.sendBackendEmail('otp', { to_email: email, otp_code: code });
-      } catch (e) { console.error('Email OTP send failed:', e); }
+        await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_OTP_TEMPLATE_ID, { to_email: email, email: email, otp_code: code });
+      } catch (e) { console.error('EmailJS OTP send failed:', e); }
     } else {
       console.warn('EmailJS not configured — OTP code for testing:', code);
     }
@@ -2427,6 +2552,7 @@
         bindCalendarAdminClicks();
         if (currentUserIsAdmin) checkAdminWarningBanner();
         if (currentUserIsOwner) checkMonthlyReferralReset();
+        startNotificationListener();
       } else {
         signInBtn.style.display = 'inline-flex';
         userBadge.style.display = 'none';
@@ -2436,6 +2562,7 @@
         currentUserIsOwner = false;
         bindCalendarAdminClicks();
         applyReferralVisibility();
+        stopNotificationListener();
       }
     });
   }
@@ -2467,15 +2594,24 @@
   referralModal?.addEventListener('click', (e) => { if (e.target === referralModal) closeReferralModal(); });
 
   async function sendReferralRequestEmail(name, email) {
-    try { await window.sendBackendEmail('referral_request', { customer_name: name, customer_email: email }); }
-    catch (e) { console.error('Referral request email failed:', e); }
+    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
+        && window.EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID && window.EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID !== "YOUR_EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID") {
+      try { await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_REFERRAL_REQUEST_TEMPLATE_ID, { customer_name: name, customer_email: email }); }
+      catch (e) { console.error('Referral request email failed:', e); }
+    }
     // Auto-reply straight to the customer confirming we received their request
-    try { await window.sendBackendEmail('referral_request_autoreply', { to_email: email, customer_name: name }); }
-    catch (e) { console.error('Referral auto-reply email failed:', e); }
+    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
+        && window.EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID && window.EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID !== "YOUR_EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID") {
+      try { await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_REFERRAL_REQUEST_AUTOREPLY_TEMPLATE_ID, { to_email: email, email: email, customer_name: name }); }
+      catch (e) { console.error('Referral auto-reply email failed:', e); }
+    }
   }
   async function sendReferralApprovedEmail(email, name, link) {
-    try { await window.sendBackendEmail('referral_approved', { to_email: email, customer_name: name, referral_link: link }); }
-    catch (e) { console.error('Referral approved email failed:', e); }
+    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
+        && window.EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID && window.EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID !== "YOUR_EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID") {
+      try { await window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_REFERRAL_APPROVED_TEMPLATE_ID, { to_email: email, email: email, customer_name: name, referral_link: link }); }
+      catch (e) { console.error('Referral approved email failed:', e); }
+    }
   }
 
   function showReferralPopup(text) {
@@ -2803,13 +2939,24 @@
 
   function sendOrderReadyEmail(email, title) {
     if (!email) return;
-    window.sendBackendEmail('order_ready', { to_email: email, order_title: title })
-      .catch((e) => console.error('Order-ready email failed:', e));
+    createNotification('customer', email, `🎉 Your order "${title}" is ready! Check My Orders for the details.`);
+    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
+        && window.EMAILJS_ORDER_READY_TEMPLATE_ID && window.EMAILJS_ORDER_READY_TEMPLATE_ID !== "YOUR_EMAILJS_ORDER_READY_TEMPLATE_ID") {
+      window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_ORDER_READY_TEMPLATE_ID, {
+        to_email: email, email: email, order_title: title
+      }).catch((e) => console.error('Order-ready email failed:', e));
+    }
   }
 
   function notifyOwnerOfPayment(email, username) {
     // Notifies the owner by email when a customer submits payment proof.
-    window.sendBackendEmail('payment_alert', { customer_email: email, customer_username: username }).catch(() => {});
+    // See FIREBASE-SETUP.md "Email Notifications" section for setup steps.
+    if (window.emailjs && window.EMAILJS_SERVICE_ID && window.EMAILJS_SERVICE_ID !== "YOUR_EMAILJS_SERVICE_ID"
+        && window.EMAILJS_PAYMENT_TEMPLATE_ID && window.EMAILJS_PAYMENT_TEMPLATE_ID !== "YOUR_EMAILJS_PAYMENT_TEMPLATE_ID") {
+      window.emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_PAYMENT_TEMPLATE_ID, {
+        customer_email: email, customer_username: username
+      }).catch(() => {});
+    }
   }
 
   const myOrdersModal = document.getElementById('myOrdersModal');
@@ -2916,6 +3063,12 @@
         btn.addEventListener('click', async () => {
           if (!confirm('Approve this payment? The customer will immediately get their Drive link.')) return;
           await updateDoc(doc(db, 'orders', btn.dataset.id), { paymentStatus: 'approved' });
+          try {
+            const oSnap = await getDoc(doc(db, 'orders', btn.dataset.id));
+            if (oSnap.exists() && oSnap.data().customerEmail) {
+              createNotification('customer', oSnap.data().customerEmail, `✅ Your payment for "${oSnap.data().title || 'your order'}" was approved!`);
+            }
+          } catch (e) { /* non-critical */ }
           logAdminActivity('Approved payment', btn.dataset.id);
           loadAdminOrders();
         });
@@ -4989,6 +5142,7 @@
         advanceConfirmed: false,
         status: 'new', createdAt: serverTimestamp()
       });
+      createNotification('admin', null, `📦 New booking from ${currentUser ? (currentUser.displayName || currentUser.email) : 'a guest'} — Rs. ${finalTotal.toLocaleString()}`);
     } catch (e) { console.error('Booking request save failed:', e); }
 
     const waUrl = `https://wa.me/94717935537?text=${encodeURIComponent(msg)}`;
