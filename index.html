@@ -464,6 +464,30 @@
 
   /* ---------- Portfolio ---------- */
   .portfolio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .portfolio-filter-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+  .portfolio-filter-pills button{
+    padding:8px 16px;border-radius:100px;border:1px solid var(--line);background:var(--card);color:var(--muted);
+    font-family:'Inter';font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s ease;
+  }
+  .portfolio-filter-pills button:hover{border-color:var(--pink);color:var(--text);}
+  .portfolio-filter-pills button.active{background:var(--grad);color:#0a0a0d;border-color:transparent;}
+  .package-search-wrap{position:relative;max-width:420px;margin:0 0 18px;}
+  .package-search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none;}
+  #packageSearchInput{width:100%;padding:12px 14px 12px 40px;border-radius:100px;border:1px solid var(--line);background:var(--card);color:var(--text);font-family:'Inter';font-size:13.5px;}
+  #packageSearchInput:focus{outline:none;border-color:var(--pink);}
+  .product-card.pkg-hidden{display:none !important;}
+  .shop-category-block.pkg-hidden{display:none !important;}
+  .pkg-popular-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(90deg,#FF3D77,#8A5CF6);color:#fff;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:8px;}
+  #recentlyViewedStrip{margin-bottom:24px;}
+  #recentlyViewedStrip h4{font-size:12.5px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;}
+  #recentlyViewedStrip .rv-track{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;}
+  .rv-chip{
+    flex-shrink:0;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+    border-radius:100px;padding:6px 14px 6px 6px;cursor:pointer;transition:border-color .2s ease;white-space:nowrap;
+  }
+  .rv-chip:hover{border-color:var(--pink);}
+  .rv-chip img{width:26px;height:26px;border-radius:50%;object-fit:cover;}
+  .rv-chip span{font-size:12px;font-weight:600;}
   .portfolio-tile{aspect-ratio:4/3;border-radius:16px;border:1px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg, rgba(255,176,32,0.06), rgba(139,47,232,0.06));color:var(--muted);font-size:13px;text-align:center;padding:20px;transition:border-color .3s;}
   .portfolio-item{aspect-ratio:4/3;border-radius:16px;overflow:hidden;position:relative;cursor:pointer;border:1px solid var(--line);}
   .portfolio-item img{width:100%;height:100%;object-fit:cover;transition:transform .4s;}
@@ -492,27 +516,17 @@
     animation:heartBurst .65s ease-out both;text-shadow:0 4px 20px rgba(0,0,0,0.4);
   }
 
-  #mobileTabBar{
-    display:none;position:fixed;left:0;right:0;bottom:0;z-index:230;background:var(--card);
-    border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));
-    align-items:stretch;justify-content:space-around;backdrop-filter:blur(14px);
-  }
-  #mobileTabBar a{
-    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;
-    color:var(--muted);font-size:10px;font-weight:600;position:relative;
-  }
-  #mobileTabBar a svg{width:20px;height:20px;}
-  #mobileTabBar a.mtb-active{color:var(--pink);}
-  .mtb-badge{
-    position:absolute;top:2px;right:calc(50% - 18px);background:var(--pink);color:#fff;font-size:9px;
-    font-weight:700;min-width:14px;height:14px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 3px;
-  }
-  @media(max-width:768px){
-    #mobileTabBar{display:flex;}
-    .cart-fab, .chat-fab{bottom:80px;}
-    #backToTopBtn{bottom:150px;}
-  }
   #lightboxContent img, #lightboxContent iframe{max-width:90vw;max-height:85vh;border-radius:12px;}
+  .lightbox-nav-btn{
+    position:fixed;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:background .2s ease, transform .2s ease;z-index:5;
+  }
+  .lightbox-nav-btn:hover{background:rgba(255,255,255,0.18);}
+  .lightbox-nav-btn svg{width:22px;height:22px;}
+  .lightbox-prev{left:20px;}
+  .lightbox-next{right:20px;}
+  @media(max-width:640px){ .lightbox-nav-btn{width:40px;height:40px;} .lightbox-prev{left:8px;} .lightbox-next{right:8px;} }
   #lightboxContent iframe{width:80vw;height:45vw;max-height:70vh;border:none;}
   .portfolio-tile:hover{border-color:var(--pink);color:var(--text);}
   .portfolio-tile svg{width:28px;height:28px;stroke:var(--muted);}
@@ -705,10 +719,11 @@
   .cart-fab svg{width:24px;height:24px;}
 
   #stickyCartBar{
-    display:none;position:fixed;left:0;right:0;bottom:64px;z-index:225;
+    display:none;position:fixed;left:0;right:0;bottom:0;z-index:225;
     background:var(--grad);color:#0a0a0d;border:none;padding:14px 20px;
     align-items:center;justify-content:space-between;font-family:'Inter';font-weight:700;font-size:14px;
     box-shadow:0 -10px 30px -10px rgba(0,0,0,0.4);cursor:pointer;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom));
   }
   #stickyCartBar.show{display:flex;animation:stickyCartSlideUp .35s ease both;}
   @keyframes stickyCartSlideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
@@ -723,7 +738,7 @@
   }
   #backToTopBtn.show{opacity:1;transform:translateY(0);pointer-events:auto;}
   #backToTopBtn:hover{border-color:var(--pink);transform:translateY(-3px);}
-  @media(max-width:768px){ #backToTopBtn{bottom:150px;} body{padding-bottom:64px;} }
+  @media(max-width:768px){ #backToTopBtn{bottom:150px;} }
   .nav-links a.nav-active{color:var(--text);position:relative;}
   .nav-links a.nav-active::after{content:'';position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--grad);border-radius:2px;}
 
@@ -798,6 +813,17 @@
   .qty-control{display:flex;align-items:center;gap:8px;}
   .qty-control button{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;font-size:14px;}
   .cart-total-row{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;padding-top:14px;margin-top:6px;border-top:1px solid var(--line);}
+  .cart-total-sticky{position:sticky;bottom:-1px;background:var(--card);z-index:2;}
+  .checkout-steps{display:flex;align-items:center;gap:6px;margin-bottom:16px;}
+  .checkout-step{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:600;}
+  .checkout-step span{width:20px;height:20px;border-radius:50%;background:var(--bg-alt);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10.5px;}
+  .checkout-step.active{color:var(--text);}
+  .checkout-step.active span{background:var(--grad);color:#0a0a0d;border-color:transparent;}
+  .checkout-step:not(:last-child)::after{content:'';flex:1;height:1px;background:var(--line);margin:0 2px;min-width:14px;}
+  .freq-booked-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .freq-booked-item img{width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;}
+  .freq-booked-item .fb-info{flex:1;font-size:12px;}
+  .freq-booked-item button{flex-shrink:0;}
 
   /* ---------- Team ---------- */
   .team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
@@ -1105,6 +1131,7 @@
       <h2>Portfolio</h2>
       <p>A growing collection of shoots and edits. New work added regularly — get in touch to see the full reel.</p>
     </div>
+    <div class="portfolio-filter-pills" id="portfolioFilterPills" style="display:none;"></div>
     <div class="portfolio-grid" id="portfolioGrid">
       <p style="color:var(--muted);font-size:14px;grid-column:1/-1;">Portfolio coming soon — check back shortly.</p>
     </div>
@@ -1113,7 +1140,13 @@
 
 <div class="modal-overlay" id="lightboxModal" style="display:none;background:rgba(2,2,4,0.94);">
   <button class="modal-close" id="lightboxClose" aria-label="Close" style="position:fixed;top:20px;right:24px;font-size:32px;">&times;</button>
+  <button type="button" id="lightboxPrev" class="lightbox-nav-btn lightbox-prev" aria-label="Previous photo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
   <div id="lightboxContent" style="max-width:90vw;max-height:85vh;"></div>
+  <button type="button" id="lightboxNext" class="lightbox-nav-btn lightbox-next" aria-label="Next photo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
 </div>
 
 <section id="shop">
@@ -1124,6 +1157,11 @@
       <p>Pick a package and add it to your cart — we'll confirm details and payment with you directly.</p>
     </div>
     <div id="todayRateBadge" style="display:none;"></div>
+    <div class="package-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="packageSearchInput" placeholder="Search packages… (e.g. wedding, drone, editing)">
+    </div>
+    <div id="recentlyViewedStrip" style="display:none;"></div>
     <div id="shopGrid" class="shop-categorized">
       <p style="color:var(--muted);font-size:14px;">Packages coming soon — check back shortly.</p>
     </div>
@@ -1526,6 +1564,15 @@
       <form id="adminPortfolioForm" class="admin-form">
         <input type="text" id="portImage" placeholder="Image / thumbnail URL" required class="full">
         <input type="text" id="portCaption" placeholder="Caption (e.g. Wedding Highlights)" class="full">
+        <select id="portCategory" class="full" style="background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;">
+          <option value="">Category (optional)</option>
+          <option value="Wedding">💍 Wedding</option>
+          <option value="Birthday">🎂 Birthday & Family</option>
+          <option value="Portrait">📸 Portrait</option>
+          <option value="Commercial">🏢 Commercial</option>
+          <option value="Drone">🚁 Drone</option>
+          <option value="Editing">🎬 Editing</option>
+        </select>
         <input type="url" id="portVideo" placeholder="Video URL (YouTube/Vimeo) — optional" class="full">
         <button type="submit" class="btn btn-primary full">Add to Portfolio</button>
         <p id="adminPortfolioMsg" class="full" style="font-size:13px;min-height:16px;"></p>
@@ -1724,13 +1771,6 @@
   <span class="cart-count" id="cartCount" style="display:none;">0</span>
 </button>
 
-<nav id="mobileTabBar" aria-label="Mobile navigation">
-  <a href="#" data-tab-target="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span>Home</span></a>
-  <a href="#shop" data-tab-target="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg><span>Packages</span></a>
-  <a href="#" id="mobileTabCart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>Cart</span><span class="mtb-badge" id="mobileTabCartBadge" style="display:none;">0</span></a>
-  <a href="#" id="mobileTabAccount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></a>
-</nav>
-
 <button type="button" id="backToTopBtn" aria-label="Back to top" style="display:none;">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
 </button>
@@ -1743,11 +1783,18 @@
 <div class="modal-overlay" id="cartModal" style="display:none;">
   <div class="modal-card" style="max-width:420px;">
     <button class="modal-close" id="cartClose" aria-label="Close">&times;</button>
-    <h3 style="font-size:19px;font-weight:700;margin-bottom:18px;">Your Cart</h3>
+    <h3 style="font-size:19px;font-weight:700;margin-bottom:14px;">Your Cart</h3>
+    <div class="checkout-steps" id="checkoutSteps" style="display:none;">
+      <div class="checkout-step active" data-step="cart"><span>1</span>Cart</div>
+      <div class="checkout-step" data-step="details"><span>2</span>Details</div>
+      <div class="checkout-step" data-step="payment"><span>3</span>Payment</div>
+    </div>
     <div id="cartItemsList"></div>
-    <div class="cart-total-row" id="cartTotalRow" style="display:none;">
+    <div id="frequentlyBookedWrap" style="display:none;"></div>
+    <div class="cart-total-row cart-total-sticky" id="cartTotalRow" style="display:none;">
       <span>Total</span><span id="cartTotalAmount">Rs. 0</span>
     </div>
+    <p id="estimatedCompletionNote" style="display:none;font-size:12px;color:var(--muted);margin-top:8px;">⏱ Most orders like this are typically completed within 5-10 working days after the event — your admin will confirm an exact timeline.</p>
     <div id="discountItemPicker" style="display:none;margin-top:10px;"></div>
     <div id="cartEventDetails" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:16px;">
       <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px;">Tell us about your event — all fields required to checkout.</p>
@@ -4506,6 +4553,7 @@
       await addDoc(portfolioCol, {
         image: document.getElementById('portImage').value.trim(),
         caption: document.getElementById('portCaption').value.trim(),
+        category: document.getElementById('portCategory').value || null,
         videoUrl: document.getElementById('portVideo').value.trim() || null,
         createdAt: serverTimestamp()
       });
@@ -4572,6 +4620,36 @@
     }).catch(() => { /* non-critical */ });
   }
 
+  function trackRecentlyViewed(name, image) {
+    if (!name) return;
+    try {
+      let list = JSON.parse(localStorage.getItem('ccs-recently-viewed') || '[]');
+      list = list.filter(x => x.name !== name);
+      list.unshift({ name, image });
+      list = list.slice(0, 8);
+      localStorage.setItem('ccs-recently-viewed', JSON.stringify(list));
+    } catch (e) { /* non-critical */ }
+  }
+  function renderRecentlyViewedStrip() {
+    const wrap = document.getElementById('recentlyViewedStrip');
+    if (!wrap) return;
+    let list = [];
+    try { list = JSON.parse(localStorage.getItem('ccs-recently-viewed') || '[]'); } catch (e) { list = []; }
+    if (!list.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    wrap.innerHTML = `<h4>Recently Viewed</h4><div class="rv-track">${list.map(item => `
+      <div class="rv-chip" data-rv-name="${escapeHtml(item.name)}">
+        ${item.image ? `<img src="${item.image}" alt="${escapeHtml(item.name)}">` : ''}
+        <span>${escapeHtml(item.name)}</span>
+      </div>`).join('')}</div>`;
+    wrap.querySelectorAll('.rv-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const target = Array.from(document.querySelectorAll('#shopGrid .product-card')).find(c => c.dataset.pkgName === chip.dataset.rvName);
+        if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); target.style.outline = '2px solid var(--pink)'; setTimeout(() => target.style.outline = '', 1500); }
+      });
+    });
+  }
+
   async function loadShopProducts() {
     const grid = document.getElementById('shopGrid');
     if (!firebaseReady) return;
@@ -4597,14 +4675,31 @@
         if (!grouped[sec]) { grouped[sec] = []; sectionOrder.push(sec); }
         grouped[sec].push(p);
       });
+
+      // Most Popular badge — tally package names across past booking requests, mark the top one.
+      let mostPopularName = null;
+      try {
+        const bookingSnap = await getDocs(bookingRequestsCol);
+        const tally = {};
+        bookingSnap.forEach(d => {
+          (d.data().items || []).forEach(it => {
+            const base = (it.name || '').split(' (')[0]; // strip "(Tier)" suffix
+            if (base) tally[base] = (tally[base] || 0) + 1;
+          });
+        });
+        let topCount = 0;
+        Object.entries(tally).forEach(([name, count]) => { if (count > topCount) { topCount = count; mostPopularName = name; } });
+        if (topCount < 2) mostPopularName = null; // don't show badge until there's real signal
+      } catch (e) { /* non-critical */ }
+
       grid.innerHTML = sectionOrder.map(sec => `
-        <div class="shop-category-block reveal in-view">
+        <div class="shop-category-block reveal in-view" data-pkg-section>
           <h3>${escapeHtml(sec)}</h3>
           <div class="shop-grid">
             ${grouped[sec].map(p => {
               const tiers = p.tiers && p.tiers.length ? p.tiers : (p.price ? [{ label: p.category || 'Price', price: p.price }] : []);
               return `
-              <div class="product-card reveal in-view">
+              <div class="product-card reveal in-view" data-pkg-search="${escapeHtml(((p.name || '') + ' ' + (p.description || '')).toLowerCase())}" data-pkg-id="${p._id}" data-pkg-name="${escapeHtml(p.name || 'Package')}" data-pkg-image="${p.image || ''}">
                 ${p.image ? `
                   <div class="product-img-wrap">
                     <img class="product-img" src="${p.image}" alt="${escapeHtml(p.name || 'Package')} — Creative Canvas Studio photography package in Sri Lanka" loading="lazy">
@@ -4614,6 +4709,7 @@
                     </button>
                   </div>` : `<div class="product-img"></div>`}
                 <div class="product-body">
+                  ${mostPopularName && p.name === mostPopularName ? '<span class="pkg-popular-badge">🔥 Most Popular</span>' : ''}
                   <h3>${escapeHtml(p.name || 'Package')}</h3>
                   ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ''}
                   <div class="tier-pick-row">
@@ -4631,8 +4727,17 @@
           </div>
         </div>`).join('');
       document.querySelectorAll('[data-view-img]').forEach(btn => {
-        btn.addEventListener('click', () => openImageLightbox(btn.dataset.viewImg, false));
+        btn.addEventListener('click', () => {
+          const card = btn.closest('.product-card');
+          if (card) trackRecentlyViewed(card.dataset.pkgName, card.dataset.pkgImage);
+          openImageLightbox(btn.dataset.viewImg, false);
+        });
       });
+      document.querySelectorAll('#shopGrid .add-to-cart-btn').forEach(btn => {
+        const card = btn.closest('.product-card');
+        if (card) btn.addEventListener('click', () => trackRecentlyViewed(card.dataset.pkgName, card.dataset.pkgImage));
+      });
+      renderRecentlyViewedStrip();
 
       // Product structured data — helps packages show pricing directly in Google search results
       const allProducts = [];
@@ -4676,6 +4781,18 @@
   }
   if (firebaseReady) loadShopProducts();
 
+  document.getElementById('packageSearchInput')?.addEventListener('input', (e) => {
+    const term = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#shopGrid [data-pkg-search]').forEach(card => {
+      const match = !term || card.getAttribute('data-pkg-search').includes(term);
+      card.classList.toggle('pkg-hidden', !match);
+    });
+    document.querySelectorAll('#shopGrid [data-pkg-section]').forEach(block => {
+      const anyVisible = block.querySelectorAll('[data-pkg-search]:not(.pkg-hidden)').length > 0;
+      block.classList.toggle('pkg-hidden', !anyVisible);
+    });
+  });
+
   function getYouTubeEmbed(url) {
     const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
     return m ? `https://www.youtube.com/embed/${m[1]}` : null;
@@ -4704,6 +4821,7 @@
     }
   }
 
+  let portfolioItemsCache = [];
   async function loadPortfolio() {
     const grid = document.getElementById('portfolioGrid');
     if (!firebaseReady) return;
@@ -4716,13 +4834,19 @@
       }
       grid.innerHTML = '';
       const favIds = getPortfolioFavs();
+      portfolioItemsCache = [];
+      const categories = new Set();
       snap.forEach(docSnap => {
         const p = docSnap.data();
         const isVideo = !!p.videoUrl;
         const isFav = favIds.includes(docSnap.id);
+        if (p.category) categories.add(p.category);
+        portfolioItemsCache.push(p);
         const item = document.createElement('div');
         item.className = 'portfolio-item reveal in-view';
         item.dataset.favId = docSnap.id;
+        item.dataset.category = p.category || '';
+        item.dataset.pIndex = portfolioItemsCache.length - 1;
         item.innerHTML = `
           <img src="${p.image || ''}" alt="${escapeHtml(p.caption || 'Portfolio work')} — Creative Canvas Studio photography and videography portfolio, Sri Lanka" loading="lazy">
           ${isVideo ? `<div class="play-badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.35)"/><path d="M10 8l6 4-6 4z"/></svg></div>` : `<div class="p-preview-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Preview</div>`}
@@ -4738,7 +4862,7 @@
             clickTimer = null;
             togglePortfolioFav(docSnap.id, item);
           } else {
-            clickTimer = setTimeout(() => { clickTimer = null; openLightbox(p); }, 260);
+            clickTimer = setTimeout(() => { clickTimer = null; openLightbox(p, portfolioItemsCache.length - 1); }, 260);
           }
         });
         item.querySelector('.p-fav-btn').addEventListener('click', (e) => {
@@ -4747,7 +4871,26 @@
         });
         grid.appendChild(item);
       });
+      renderPortfolioFilterPills(Array.from(categories));
     } catch (err) { grid.innerHTML = errorStateHtml("Couldn't load the portfolio right now — please refresh the page."); }
+  }
+  const categoryLabels = { Wedding: '💍 Wedding', Birthday: '🎂 Birthday & Family', Portrait: '📸 Portrait', Commercial: '🏢 Commercial', Drone: '🚁 Drone', Editing: '🎬 Editing' };
+  function renderPortfolioFilterPills(categories) {
+    const wrap = document.getElementById('portfolioFilterPills');
+    if (!categories.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'flex';
+    wrap.innerHTML = `<button type="button" class="active" data-cat="">All</button>` +
+      categories.map(c => `<button type="button" data-cat="${escapeHtml(c)}">${categoryLabels[c] || escapeHtml(c)}</button>`).join('');
+    wrap.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        wrap.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.cat;
+        document.querySelectorAll('#portfolioGrid .portfolio-item').forEach(item => {
+          item.style.display = (!cat || item.dataset.category === cat) ? '' : 'none';
+        });
+      });
+    });
   }
   if (firebaseReady) loadPortfolio();
 
@@ -4789,7 +4932,9 @@
     document.getElementById('lightboxModal').style.display = 'flex';
   }
 
-  function openLightbox(p) {
+  let lightboxIndex = -1;
+  function openLightbox(p, index) {
+    lightboxIndex = (typeof index === 'number') ? index : -1;
     const content = document.getElementById('lightboxContent');
     const yt = p.videoUrl ? getYouTubeEmbed(p.videoUrl) : null;
     const vm = p.videoUrl ? getVimeoEmbed(p.videoUrl) : null;
@@ -4798,16 +4943,44 @@
     } else {
       content.innerHTML = `<img src="${p.image || ''}" alt="${escapeHtml(p.caption || '')}">`;
     }
+    const hasNav = lightboxIndex >= 0 && portfolioItemsCache.length > 1;
+    document.getElementById('lightboxPrev').style.display = hasNav ? 'flex' : 'none';
+    document.getElementById('lightboxNext').style.display = hasNav ? 'flex' : 'none';
     document.getElementById('lightboxModal').style.display = 'flex';
   }
+  function lightboxStep(dir) {
+    if (lightboxIndex < 0 || !portfolioItemsCache.length) return;
+    lightboxIndex = (lightboxIndex + dir + portfolioItemsCache.length) % portfolioItemsCache.length;
+    openLightbox(portfolioItemsCache[lightboxIndex], lightboxIndex);
+  }
+  document.getElementById('lightboxPrev')?.addEventListener('click', (e) => { e.stopPropagation(); lightboxStep(-1); });
+  document.getElementById('lightboxNext')?.addEventListener('click', (e) => { e.stopPropagation(); lightboxStep(1); });
+  document.addEventListener('keydown', (e) => {
+    if (document.getElementById('lightboxModal').style.display !== 'flex') return;
+    if (e.key === 'ArrowLeft') lightboxStep(-1);
+    if (e.key === 'ArrowRight') lightboxStep(1);
+  });
+  // Swipe left/right to navigate on touch devices
+  (function initLightboxSwipe() {
+    const modal = document.getElementById('lightboxModal');
+    if (!modal) return;
+    let startX = 0;
+    modal.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    modal.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) lightboxStep(dx > 0 ? -1 : 1);
+    }, { passive: true });
+  })();
   document.getElementById('lightboxClose')?.addEventListener('click', () => {
     document.getElementById('lightboxModal').style.display = 'none';
     document.getElementById('lightboxContent').innerHTML = '';
+    lightboxIndex = -1;
   });
   document.getElementById('lightboxModal')?.addEventListener('click', (e) => {
     if (e.target.id === 'lightboxModal') {
       e.target.style.display = 'none';
       document.getElementById('lightboxContent').innerHTML = '';
+      lightboxIndex = -1;
     }
   });
 
@@ -4832,26 +5005,86 @@
     renderCart();
   }
 
+  function updateCheckoutStepDots() {
+    const steps = document.querySelectorAll('#checkoutSteps .checkout-step');
+    if (!steps.length) return;
+    const dateFilled = !!document.getElementById('cartEventDate')?.value;
+    const paymentStarted = document.getElementById('advanceNowPanel')?.style.display === 'block'
+      || document.querySelector('.advance-choice-btn.picked');
+    steps.forEach(s => {
+      const step = s.dataset.step;
+      const active = step === 'cart' || (step === 'details' && dateFilled) || (step === 'payment' && paymentStarted);
+      s.classList.toggle('active', !!active);
+    });
+  }
+  document.getElementById('cartEventDate')?.addEventListener('change', updateCheckoutStepDots);
+
+  async function renderFrequentlyBookedTogether() {
+    const wrap = document.getElementById('frequentlyBookedWrap');
+    if (!wrap || !firebaseReady || !cart.length) return;
+    try {
+      const bookingSnap = await getDocs(bookingRequestsCol);
+      const cartNames = new Set(cart.map(i => i.name.split(' (')[0]));
+      const coCounts = {};
+      bookingSnap.forEach(d => {
+        const names = (d.data().items || []).map(it => (it.name || '').split(' (')[0]);
+        const hasCartItem = names.some(n => cartNames.has(n));
+        if (!hasCartItem) return;
+        names.forEach(n => { if (!cartNames.has(n) && n) coCounts[n] = (coCounts[n] || 0) + 1; });
+      });
+      const top = Object.entries(coCounts).sort((a, b) => b[1] - a[1]).slice(0, 2);
+      if (!top.length) { wrap.style.display = 'none'; return; }
+      // Find matching product cards on the page for image/price
+      const matches = top.map(([name]) => {
+        const card = Array.from(document.querySelectorAll('#shopGrid .product-card')).find(c => c.dataset.pkgName === name);
+        const priceBtn = card?.querySelector('.tier-pick-btn');
+        return card ? { name, image: card.dataset.pkgImage, id: priceBtn?.dataset.id, price: priceBtn?.dataset.price, tierName: priceBtn?.dataset.name } : null;
+      }).filter(Boolean);
+      if (!matches.length) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      wrap.innerHTML = `<p style="font-size:11.5px;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.5px;">Frequently booked together</p>` +
+        matches.map(m => `
+          <div class="freq-booked-item">
+            ${m.image ? `<img src="${m.image}" alt="${escapeHtml(m.name)}">` : ''}
+            <div class="fb-info"><b>${escapeHtml(m.name)}</b></div>
+            <button type="button" class="mini-btn" data-fb-add="${m.id}" data-fb-name="${escapeHtml(m.tierName || m.name)}" data-fb-price="${m.price || 0}">+ Add</button>
+          </div>`).join('');
+      wrap.querySelectorAll('[data-fb-add]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          addToCart(btn.dataset.fbAdd, btn.dataset.fbName, parseFloat(btn.dataset.fbPrice));
+          renderFrequentlyBookedTogether();
+        });
+      });
+    } catch (e) { wrap.style.display = 'none'; }
+  }
+
   function renderCart() {
     const count = cart.reduce((sum, i) => sum + i.qty, 0);
     const countEl = document.getElementById('cartCount');
     countEl.textContent = count;
     countEl.style.display = count > 0 ? 'flex' : 'none';
-    const mtbBadge = document.getElementById('mobileTabCartBadge');
-    if (mtbBadge) { mtbBadge.textContent = count; mtbBadge.style.display = count > 0 ? 'flex' : 'none'; }
     updateStickyCartBar();
 
     const list = document.getElementById('cartItemsList');
     const totalRow = document.getElementById('cartTotalRow');
     const eventDetails = document.getElementById('cartEventDetails');
     const advanceSection = document.getElementById('cartAdvanceSection');
+    const stepsBar = document.getElementById('checkoutSteps');
+    const estNote = document.getElementById('estimatedCompletionNote');
     if (!cart.length) {
       list.innerHTML = '<p style="color:var(--muted);font-size:14px;">Your cart is empty. Add a package to get started.</p>';
       totalRow.style.display = 'none';
       eventDetails.style.display = 'none';
       advanceSection.style.display = 'none';
+      stepsBar.style.display = 'none';
+      estNote.style.display = 'none';
+      document.getElementById('frequentlyBookedWrap').style.display = 'none';
       return;
     }
+    stepsBar.style.display = 'flex';
+    estNote.style.display = 'block';
+    updateCheckoutStepDots();
+    renderFrequentlyBookedTogether();
     eventDetails.style.display = 'block';
     advanceSection.style.display = 'block';
     let total = 0;
@@ -5513,46 +5746,14 @@
     }, { passive: true });
   })();
 
-  // Mobile bottom tab bar
-  (function initMobileTabBar() {
-    const bar = document.getElementById('mobileTabBar');
-    if (!bar) return;
-    bar.querySelector('[data-tab-target="top"]')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    document.getElementById('mobileTabCart')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      renderCart();
-      document.getElementById('cartModal').style.display = 'flex';
-    });
-    document.getElementById('mobileTabAccount')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (currentUser) { openMobileAccountSheet(); }
-      else { document.getElementById('authModal').style.display = 'flex'; }
-    });
-    const tabs = Array.from(bar.querySelectorAll('a[href^="#"]'));
-    window.addEventListener('scroll', () => {
-      const y = window.scrollY;
-      if (y < window.innerHeight * 0.5) {
-        tabs.forEach(t => t.classList.toggle('mtb-active', t.dataset.tabTarget === 'top'));
-        return;
-      }
-      const shop = document.getElementById('shop');
-      if (shop) {
-        const inShop = shop.getBoundingClientRect().top < window.innerHeight * 0.6 && shop.getBoundingClientRect().bottom > 0;
-        tabs.forEach(t => t.classList.toggle('mtb-active', inShop && t.dataset.tabTarget === 'shop'));
-      }
-    }, { passive: true });
-  })();
-
   // Highlight the nav link for whichever section is currently in view while scrolling
   (function initActiveNavHighlight() {
-    const navLinks = Array.from(document.querySelectorAll('.nav-links a[href^="#"]'));
+    const navLinks = Array.from(document.querySelectorAll('.nav-links a[href^="#"]'))
+      .filter(a => a.getAttribute('href').length > 1); // skip bare href="#" links (e.g. Sign In) — not a valid section id
     if (!navLinks.length) return;
     const sections = navLinks
-      .map(a => ({ link: a, el: document.querySelector(a.getAttribute('href')) }))
-      .filter(s => s.el);
+      .map(a => { try { return { link: a, el: document.querySelector(a.getAttribute('href')) }; } catch (e) { return null; } })
+      .filter(s => s && s.el);
     if (!sections.length) return;
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -5591,6 +5792,7 @@
       });
       document.getElementById('advanceNowPanel').style.display = cartAdvanceChoice === 'now' ? 'block' : 'none';
       document.getElementById('cartAdvanceMsg').textContent = '';
+      updateCheckoutStepDots();
     });
   });
 
@@ -6113,12 +6315,22 @@
   /* ---------------- Public Booking Calendar ---------------- */
   async function renderYearCalendar() {
     const grid = document.getElementById('calendarYearGrid');
-    if (!grid || !firebaseReady) return;
+    if (!grid) return;
+    if (!firebaseReady) {
+      grid.innerHTML = `<p style="color:var(--pink);font-size:14px;">Calendar unavailable — Firebase isn't configured on this page.</p>`;
+      return;
+    }
     let bookedDates = new Map();
     try {
-      const snap = await getDocs(collection(db, 'publicCalendar'));
+      // Race against a timeout so a stuck/hanging Firestore connection can never leave this
+      // stuck on "Loading calendar…" forever — after 8s we just show the calendar without booked dates.
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('calendar-timeout')), 8000));
+      const snap = await Promise.race([getDocs(collection(db, 'publicCalendar')), timeout]);
       snap.forEach(d => bookedDates.set(d.id, d.data().title || ''));
-    } catch (e) { /* non-critical */ }
+    } catch (e) {
+      console.error('Calendar data fetch failed or timed out:', e);
+      /* fall through — still render the calendar grid below, just without booked-date highlighting */
+    }
 
     const year = new Date().getFullYear();
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -6361,7 +6573,16 @@
 
   if (firebaseReady) {
     const q = query(reviewsCol, orderBy('timestamp', 'desc'));
+    let reviewsLoadedOnce = false;
+    // Safety net: if Firestore never calls back (permission issue, hung connection, etc.),
+    // stop showing "Loading reviews…" forever and show a clear error instead.
+    setTimeout(() => {
+      if (!reviewsLoadedOnce) {
+        reviewsList.innerHTML = errorStateHtml("Couldn't load reviews right now — please refresh the page.");
+      }
+    }, 8000);
     onSnapshot(q, (snap) => {
+      reviewsLoadedOnce = true;
       reviewsList.innerHTML = '';
       allReviewDocs = [];
       let total = 0, count = 0;
@@ -6419,6 +6640,12 @@
         }
         schemaEl.textContent = JSON.stringify(schema);
       } catch (e) { /* non-critical */ }
+    }, (err) => {
+      // This fires on permission-denied or connection errors — without it, a failed
+      // listener leaves "Loading reviews…" on screen forever with no explanation.
+      console.error('Reviews listener failed:', err);
+      reviewsLoadedOnce = true;
+      reviewsList.innerHTML = errorStateHtml("Couldn't load reviews right now — please refresh the page.");
     });
   }
 </script>
