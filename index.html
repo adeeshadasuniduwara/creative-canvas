@@ -1481,9 +1481,24 @@
       <div><div class="val" id="statPending">–</div><div class="lbl">Pending Payments (Rs.)</div></div>
     </div>
     <div id="adminInsightsBox" style="display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <h4 style="font-size:14px;margin:0;">Income — Last 6 Months</h4>
-        <button type="button" id="toggleInsightsBtn" class="mini-btn">Hide</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <h4 style="font-size:14px;margin:0;" id="incomeChartTitle">Income — Last 6 Months</h4>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <select id="incomePeriodSelect" style="background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--text);font-family:'Inter';font-size:12px;">
+            <option value="3">Last 3 Months</option>
+            <option value="6" selected>Last 6 Months</option>
+            <option value="12">Last 12 Months</option>
+            <option value="24">Last 24 Months</option>
+            <option value="custom">Custom Range…</option>
+          </select>
+          <span id="incomeCustomRangeWrap" style="display:none;align-items:center;gap:6px;">
+            <input type="month" id="incomeRangeFrom" style="background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:6px 8px;color:var(--text);font-family:'Inter';font-size:12px;">
+            <span style="color:var(--muted);font-size:12px;">to</span>
+            <input type="month" id="incomeRangeTo" style="background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:6px 8px;color:var(--text);font-family:'Inter';font-size:12px;">
+            <button type="button" id="incomeRangeApplyBtn" class="mini-btn">Apply</button>
+          </span>
+          <button type="button" id="toggleInsightsBtn" class="mini-btn">Hide</button>
+        </div>
       </div>
       <div id="insightsBody">
         <canvas id="incomeChart" height="90"></canvas>
@@ -3547,6 +3562,7 @@
   }
 
   let incomeChartInstance = null;
+  let cachedMonthlyIncome = {}; // 'YYYY-M' -> Rs., cached so changing the chart period doesn't need a re-fetch
   async function loadAdminStats() {
     try {
       const snap = await getDocs(ordersCol);
@@ -3573,21 +3589,51 @@
       document.getElementById('statMonthOrders').textContent = monthOrders;
       document.getElementById('statPending').textContent = pending.toLocaleString();
 
-      // Build the last 6 months' labels + values (owner/admin only — never shown to customers)
-      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const labels = [], values = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        labels.push(monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
-        values.push(monthlyIncome[d.getFullYear() + '-' + d.getMonth()] || 0);
-      }
-      renderIncomeChart(labels, values);
+      cachedMonthlyIncome = monthlyIncome;
+      renderIncomeChartForPeriod(document.getElementById('incomePeriodSelect')?.value || '6');
       loadPopularPackages();
       document.getElementById('adminInsightsBox').style.display = 'block';
     } catch (err) {
       console.error('Stats load failed:', err);
     }
   }
+
+  const monthNamesShort = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function renderIncomeChartForPeriod(periodValue) {
+    const now = new Date();
+    let labels = [], values = [], titleSuffix = '';
+    if (periodValue === 'custom') {
+      const fromVal = document.getElementById('incomeRangeFrom')?.value;
+      const toVal = document.getElementById('incomeRangeTo')?.value;
+      if (!fromVal || !toVal) return; // wait for the user to pick both dates
+      const [fy, fm] = fromVal.split('-').map(Number);
+      const [ty, tm] = toVal.split('-').map(Number);
+      let cursor = new Date(fy, fm - 1, 1);
+      const end = new Date(ty, tm - 1, 1);
+      while (cursor <= end) {
+        labels.push(monthNamesShort[cursor.getMonth()] + ' ' + String(cursor.getFullYear()).slice(2));
+        values.push(cachedMonthlyIncome[cursor.getFullYear() + '-' + cursor.getMonth()] || 0);
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+      }
+      titleSuffix = `${monthNamesShort[fm - 1]} ${fy} – ${monthNamesShort[tm - 1]} ${ty}`;
+    } else {
+      const n = parseInt(periodValue, 10) || 6;
+      for (let i = n - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(monthNamesShort[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
+        values.push(cachedMonthlyIncome[d.getFullYear() + '-' + d.getMonth()] || 0);
+      }
+      titleSuffix = `Last ${n} Months`;
+    }
+    document.getElementById('incomeChartTitle').textContent = 'Income — ' + titleSuffix;
+    renderIncomeChart(labels, values);
+  }
+  document.getElementById('incomePeriodSelect')?.addEventListener('change', (e) => {
+    const isCustom = e.target.value === 'custom';
+    document.getElementById('incomeCustomRangeWrap').style.display = isCustom ? 'inline-flex' : 'none';
+    if (!isCustom) renderIncomeChartForPeriod(e.target.value);
+  });
+  document.getElementById('incomeRangeApplyBtn')?.addEventListener('click', () => renderIncomeChartForPeriod('custom'));
 
   function renderIncomeChart(labels, values) {
     if (!window.Chart) return;
@@ -3759,6 +3805,11 @@
     if (!currentUserIsOwner) return;
     switchAdminTab('adminTabAdmins');
     loadAdminAdmins();
+  });
+  document.getElementById('adminTabPermissions')?.addEventListener('click', () => {
+    if (!currentUserIsOwner) return;
+    switchAdminTab('adminTabPermissions');
+    populatePermissionsAdminSelect();
   });
   document.getElementById('adminTabReferrals')?.addEventListener('click', () => {
     if (!currentUserIsOwner) return;
