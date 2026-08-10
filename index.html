@@ -102,6 +102,43 @@
     --blue:#2f9bf0;
     --grad: linear-gradient(90deg, var(--gold), var(--pink) 40%, var(--purple) 70%, var(--blue));
   }
+
+  /* ---------------- Site Loading Screen (adapted from Uiverse.io by jeremy_4982) ---------------- */
+  #siteLoader{
+    position:fixed;inset:0;z-index:99999;background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .5s ease, visibility .5s ease;
+  }
+  #siteLoader.loader-hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  @keyframes ccsDropAndShift{
+    0%{transform:translate(0px, 15px);}
+    16.67%{transform:translate(80px, 13px);}
+    33.34%{transform:translate(40px, 10px);}
+    50.01%{transform:translate(40px, -30px);}
+    66.68%{transform:translate(40px, 55px);}
+    83.35%{transform:translate(40px, 10px);}
+    100%{transform:translate(0px, 15px);}
+  }
+  #siteLoader .Strich1{
+    position:relative;width:130px;height:50px;background:var(--card);border:1px solid var(--line);
+    border-radius:25px;transform:rotate(45deg);box-shadow:0 4px 20px rgba(0,0,0,0.35);
+  }
+  #siteLoader .Strich2{
+    position:absolute;top:0;left:0;width:130px;height:50px;background:var(--card);border:1px solid var(--line);
+    border-radius:25px;transform:rotate(-90deg);box-shadow:0 4px 20px rgba(0,0,0,0.35);
+  }
+  #siteLoader .bubble, #siteLoader .bubble1, #siteLoader .bubble2, #siteLoader .bubble3, #siteLoader .bubble4{
+    position:absolute;top:0;width:20px;height:20px;border-radius:50%;animation:ccsDropAndShift 5s ease-in-out infinite;
+  }
+  #siteLoader .bubble{ left:15px; background:radial-gradient(circle at 30% 30%, #ffd27a, var(--gold), #e8951a); animation-duration:5s; z-index:1; }
+  #siteLoader .bubble1{ left:8px; background:radial-gradient(circle at 30% 30%, #ff8fb3, var(--pink), #d92c62); animation-duration:6s; z-index:2; }
+  #siteLoader .bubble2{ left:12px; background:radial-gradient(circle at 30% 30%, #c99bff, var(--purple), #6f21ba); animation-duration:4s; z-index:3; }
+  #siteLoader .bubble3{ left:10px; background:radial-gradient(circle at 30% 30%, #8fc7ff, var(--blue), #1f6fc4); animation-duration:7s; z-index:4; }
+  #siteLoader .bubble4{ left:6px; background:radial-gradient(circle at 30% 30%, #ffb3e6, var(--purple), var(--pink)); animation-duration:5.5s; z-index:5; }
+  @media (prefers-reduced-motion: reduce){
+    #siteLoader .bubble, #siteLoader .bubble1, #siteLoader .bubble2, #siteLoader .bubble3, #siteLoader .bubble4{ animation:none; }
+  }
+
   body, .card, .product-card, .team-card, .why-item, .leaderboard-card, .review-card, .contact-box,
   .modal-card, .admin-order-row, nav, .cart-fab, .chat-fab, .chat-window, input, textarea, select,
   .btn-outline, .mini-btn, .theme-toggle-btn{
@@ -805,6 +842,18 @@
 </style>
 </head>
 <body>
+
+<div id="siteLoader" aria-hidden="true">
+  <div class="Strich1">
+    <div class="Strich2">
+      <div class="bubble"></div>
+      <div class="bubble1"></div>
+      <div class="bubble2"></div>
+      <div class="bubble3"></div>
+      <div class="bubble4"></div>
+    </div>
+  </div>
+</div>
 
 <div id="adminWarningBanner" style="display:none;"></div>
 
@@ -1619,10 +1668,13 @@
 
 <div id="greetToast"></div>
 
-<!-- AI-generated professional voice (Piper neural TTS) — same consistent voice for every visitor,
-     instead of relying on each browser's own built-in (often robotic) speech engine. -->
-<audio id="welcomeVoiceAudio" preload="auto">
+<!-- AI-generated professional voice — same consistent voice for every visitor. English and Sinhala
+     versions; the correct one plays automatically based on the site's EN/සිං language toggle. -->
+<audio id="welcomeVoiceAudioEn" preload="auto">
   <source src="assets/welcome-voice.mp3" type="audio/mpeg">
+</audio>
+<audio id="welcomeVoiceAudioSi" preload="auto">
+  <source src="assets/welcome-voice-si.mp3" type="audio/mpeg">
 </audio>
 
 <!-- 🔧 Background music — add your own royalty-free/copyright-free instrumental track (no vocals) at assets/background-music.mp3.
@@ -1816,6 +1868,7 @@
   const ordersCol = firebaseReady ? collection(db, "orders") : null;
   const bookingRequestsCol = firebaseReady ? collection(db, "bookingRequests") : null;
   const notificationsCol = firebaseReady ? collection(db, "notifications") : null;
+  const packagePopularityCol = firebaseReady ? collection(db, "packagePopularity") : null;
   const productsCol = firebaseReady ? collection(db, "products") : null;
   const portfolioCol = firebaseReady ? collection(db, "portfolio") : null;
   const teamCol = firebaseReady ? collection(db, "team") : null;
@@ -2213,11 +2266,15 @@
     } catch (e) { /* non-critical */ }
   }
 
-  // A single professionally AI-generated voice file (assets/welcome-voice.mp3) plays for
-  // everyone — consistent quality everywhere, instead of each browser's own robotic voice.
+  // The correct-language AI voice file plays for everyone — consistent quality everywhere,
+  // instead of each browser's own robotic voice. Picks EN or SI based on the site's language toggle.
+  function getWelcomeVoiceAudio() {
+    const lang = localStorage.getItem('ccs-lang') || 'en';
+    return document.getElementById(lang === 'si' ? 'welcomeVoiceAudioSi' : 'welcomeVoiceAudioEn');
+  }
   function playWelcomeSpeech() {
     if (!canPlayWelcomeSpeechToday()) return;
-    const audio = document.getElementById('welcomeVoiceAudio');
+    const audio = getWelcomeVoiceAudio();
     if (!audio) return;
     try {
       audio.currentTime = 0;
@@ -2236,10 +2293,13 @@
     const btn = document.getElementById('speechMuteBtn');
     if (btn) btn.style.display = 'none';
   }
-  document.getElementById('welcomeVoiceAudio')?.addEventListener('ended', hideSpeechMuteButton);
+  document.getElementById('welcomeVoiceAudioEn')?.addEventListener('ended', hideSpeechMuteButton);
+  document.getElementById('welcomeVoiceAudioSi')?.addEventListener('ended', hideSpeechMuteButton);
   document.getElementById('speechMuteBtn')?.addEventListener('click', () => {
-    const audio = document.getElementById('welcomeVoiceAudio');
-    if (audio) { audio.pause(); audio.currentTime = 0; }
+    ['welcomeVoiceAudioEn', 'welcomeVoiceAudioSi'].forEach(id => {
+      const a = document.getElementById(id);
+      if (a) { a.pause(); a.currentTime = 0; }
+    });
     hideSpeechMuteButton();
   });
 
@@ -2248,7 +2308,7 @@
   // Safety net: browsers block audio from starting without a user gesture first —
   // if that happens, play it on the very first tap/click/key press instead.
   function firstInteractionSpeechFallback() {
-    const audio = document.getElementById('welcomeVoiceAudio');
+    const audio = getWelcomeVoiceAudio();
     if (canPlayWelcomeSpeechToday() && audio && audio.paused) {
       playWelcomeSpeech();
     }
@@ -4262,6 +4322,29 @@
     }
   }
 
+  async function getPopularPackageNames() {
+    if (!firebaseReady) return [];
+    try {
+      const snap = await getDocs(packagePopularityCol);
+      const counts = [];
+      snap.forEach(d => counts.push({ name: d.data().name, count: d.data().count || 0 }));
+      counts.sort((a, b) => b.count - a.count);
+      // Top package(s) tied for #1 all get the badge; only if there's real signal (count > 0)
+      const top = counts.filter(c => c.count > 0 && c.count === (counts[0]?.count || 0));
+      return top.map(c => c.name);
+    } catch (e) { return []; }
+  }
+  function bumpPackagePopularity(name) {
+    if (!firebaseReady || !name) return;
+    const safeId = name.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 120) || 'unknown';
+    runTransaction(db, async (tx) => {
+      const ref = doc(db, 'packagePopularity', safeId);
+      const snap = await tx.get(ref);
+      if (snap.exists()) tx.update(ref, { count: (snap.data().count || 0) + 1 });
+      else tx.set(ref, { name, count: 1 });
+    }).catch(() => { /* non-critical */ });
+  }
+
   async function loadShopProducts() {
     const grid = document.getElementById('shopGrid');
     if (!firebaseReady) return;
@@ -5823,6 +5906,24 @@
       } catch (e) { /* non-critical */ }
     });
   }
+
+  // Hide the site loading screen once everything has loaded — with a small minimum
+  // display time so it doesn't just flash on fast connections.
+  (function hideSiteLoader() {
+    const loader = document.getElementById('siteLoader');
+    if (!loader) return;
+    const minTime = 700;
+    const start = Date.now();
+    function hide() {
+      const elapsed = Date.now() - start;
+      const wait = Math.max(0, minTime - elapsed);
+      setTimeout(() => loader.classList.add('loader-hidden'), wait);
+    }
+    if (document.readyState === 'complete') hide();
+    else window.addEventListener('load', hide);
+    // Safety net: never let it get stuck forever
+    setTimeout(() => loader.classList.add('loader-hidden'), 6000);
+  })();
 </script>
 
 </body>
