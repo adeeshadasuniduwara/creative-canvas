@@ -815,6 +815,12 @@
   .cart-total-row{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;padding-top:14px;margin-top:6px;border-top:1px solid var(--line);}
   .cart-total-sticky{position:sticky;bottom:-1px;background:var(--card);z-index:2;}
   .checkout-steps{display:flex;align-items:center;gap:6px;margin-bottom:16px;}
+  .perm-checkbox-item{
+    display:flex;align-items:center;gap:8px;background:var(--bg-alt);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;cursor:pointer;font-size:12.5px;font-weight:600;transition:border-color .2s ease;
+  }
+  .perm-checkbox-item:hover{border-color:var(--pink);}
+  .perm-checkbox-item input{accent-color:var(--pink);width:15px;height:15px;flex-shrink:0;}
   .checkout-step{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:600;}
   .checkout-step span{width:20px;height:20px;border-radius:50%;background:var(--bg-alt);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10.5px;}
   .checkout-step.active{color:var(--text);}
@@ -1498,6 +1504,7 @@
       <button class="auth-tab" id="adminTabWaitlist" type="button">Waitlist</button>
       <button class="auth-tab" id="adminTabActivity" type="button" style="display:none;">Activity Log</button>
       <button class="auth-tab" id="adminTabChatInsights" type="button" style="display:none;">Chat Insights</button>
+      <button class="auth-tab" id="adminTabPermissions" type="button" style="display:none;">Admin Access</button>
     </div>
     <div id="adminOrdersView">
     <form id="adminOrderForm" class="admin-form">
@@ -1531,6 +1538,17 @@
       </form>
       <div id="adminAdminsList" class="admin-list-grid"></div>
       <button type="button" id="changeAdminCodeBtn" class="mini-btn" style="margin-top:20px;">🔐 Change Admin Access Code</button>
+    </div>
+    <div id="adminPermissionsView" style="display:none;">
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Choose which admin panel sections each admin can access. Select an admin below, then tick the sections they should see.</p>
+      <select id="permAdminSelect" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;margin-bottom:16px;">
+        <option value="">Select an admin…</option>
+      </select>
+      <div id="permCheckboxList" style="display:none;">
+        <div id="permCheckboxGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px;"></div>
+        <button type="button" id="savePermissionsBtn" class="btn btn-primary">Save Access</button>
+        <p id="permMsg" style="font-size:13px;min-height:16px;margin-top:10px;"></p>
+      </div>
     </div>
     <div id="adminProductsView" style="display:none;">
       <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Add packages/services with pricing — customers can add them to their cart from the Packages section.</p>
@@ -2114,6 +2132,7 @@
   let currentUser = null;
   const refCodeFromUrl = new URLSearchParams(window.location.search).get('ref');
   let currentUserIsAdmin = false;
+  let currentAdminPermissions = null; // null = default access set; array = owner-customized per-tab access
   let currentUserIsOwner = false;
   let pendingReferralDiscount = false;
   let selectedDiscountItemId = null;
@@ -2846,9 +2865,11 @@
           const adminSnap = user.email === ADMIN_EMAIL ? null : await getDoc(doc(db, 'admins', user.email));
           currentUserIsAdmin = (user.email === ADMIN_EMAIL) || (adminSnap && adminSnap.exists());
           currentUserIsOwner = (user.email === ADMIN_EMAIL);
+          currentAdminPermissions = (adminSnap && adminSnap.exists() && Array.isArray(adminSnap.data().permissions)) ? adminSnap.data().permissions : null;
         } catch (e) {
           currentUserIsAdmin = (user.email === ADMIN_EMAIL);
           currentUserIsOwner = (user.email === ADMIN_EMAIL);
+          currentAdminPermissions = null;
         }
         document.getElementById('adminBtn').style.display = currentUserIsAdmin ? 'block' : 'none';
         document.getElementById('myOrdersBtn').style.display = currentUserIsAdmin ? 'none' : 'block';
@@ -3499,21 +3520,28 @@
     requireAdminCode(openAdminPanelContent);
   });
 
+  const DEFAULT_ADMIN_TABS = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabBookings', 'adminTabWaitlist'];
   function openAdminPanelContent() {
     adminModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     document.getElementById('adminOrderForm').style.display = currentUserIsAdmin ? 'grid' : 'none';
-    document.getElementById('adminTabAdmins').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabProducts').style.display = currentUserIsAdmin ? 'inline-block' : 'none';
-    document.getElementById('adminTabPortfolio').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabTeam').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabActivity').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabChatInsights').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabReferrals').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabWallets').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabWallets').style.display = currentUserIsOwner ? 'inline-block' : 'none';
+    // Owner always sees every tab. A regular admin sees their custom-assigned tabs if the
+    // owner has set any via "Admin Access", otherwise falls back to the original default set.
+    const allowedTabs = currentUserIsOwner
+      ? adminTabs
+      : (currentAdminPermissions && currentAdminPermissions.length ? currentAdminPermissions : DEFAULT_ADMIN_TABS);
+    adminTabs.forEach(t => {
+      const el = document.getElementById(t);
+      if (!el) return;
+      const visible = t === 'adminTabPermissions' ? currentUserIsOwner : allowedTabs.includes(t);
+      el.style.display = visible ? 'inline-block' : 'none';
+    });
     document.getElementById('toggleArchivedBtn').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('exportBackupBtn').style.display = currentUserIsOwner ? 'inline-block' : 'none';
+    if (currentUserIsOwner) populatePermissionsAdminSelect();
+    // If the current tab isn't in the allowed set (e.g. permissions changed), fall back to Orders
+    const activeTab = adminTabs.find(t => document.getElementById(t)?.classList.contains('active'));
+    if (activeTab && !allowedTabs.includes(activeTab)) switchAdminTab('adminTabOrders');
     loadAdminOrders();
     loadAdminStats();
   }
@@ -3694,11 +3722,11 @@
     });
   });
 
-  const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity', 'adminTabChatInsights'];
-  const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView', adminTabChatInsights: 'adminChatInsightsView' };
+  const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabPermissions', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity', 'adminTabChatInsights'];
+  const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabPermissions: 'adminPermissionsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView', adminTabChatInsights: 'adminChatInsightsView' };
   const adminTabLabels = {
     adminTabOrders: 'Orders', adminTabCustomers: 'Customers', adminTabProducts: 'Packages',
-    adminTabPortfolio: 'Portfolio', adminTabTeam: 'Team', adminTabAdmins: 'Admins',
+    adminTabPortfolio: 'Portfolio', adminTabTeam: 'Team', adminTabAdmins: 'Admins', adminTabPermissions: 'Admin Access',
     adminTabReferrals: 'Referrals', adminTabWallets: 'Wallets', adminTabBookings: 'Booking Requests',
     adminTabWaitlist: 'Waitlist', adminTabActivity: 'Activity Log', adminTabChatInsights: 'Chat Insights'
   };
@@ -4050,8 +4078,57 @@
       await setDoc(doc(db, 'admins', email), { email, addedAt: serverTimestamp(), addedBy: ADMIN_EMAIL });
       e.target.reset();
       loadAdminAdmins();
+      populatePermissionsAdminSelect();
     } catch (err) {
       alert('Could not add admin.');
+    }
+  });
+
+  /* ---------------- Admin Access (per-admin tab permissions) ---------------- */
+  const PERMISSION_ASSIGNABLE_TABS = adminTabs.filter(t => t !== 'adminTabPermissions');
+  async function populatePermissionsAdminSelect() {
+    const select = document.getElementById('permAdminSelect');
+    if (!select) return;
+    const current = select.value;
+    try {
+      const snap = await getDocs(collection(db, 'admins'));
+      select.innerHTML = '<option value="">Select an admin…</option>' +
+        snap.docs.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.id)}</option>`).join('');
+      if (current) select.value = current;
+    } catch (e) { /* non-critical */ }
+  }
+  function renderPermissionCheckboxes(currentPerms) {
+    const grid = document.getElementById('permCheckboxGrid');
+    const active = currentPerms && currentPerms.length ? currentPerms : DEFAULT_ADMIN_TABS;
+    grid.innerHTML = PERMISSION_ASSIGNABLE_TABS.map(t => `
+      <label class="perm-checkbox-item">
+        <input type="checkbox" value="${t}" ${active.includes(t) ? 'checked' : ''}>
+        ${escapeHtml(adminTabLabels[t] || t)}
+      </label>`).join('');
+  }
+  document.getElementById('permAdminSelect')?.addEventListener('change', async (e) => {
+    const email = e.target.value;
+    const listWrap = document.getElementById('permCheckboxList');
+    if (!email) { listWrap.style.display = 'none'; return; }
+    listWrap.style.display = 'block';
+    document.getElementById('permMsg').textContent = '';
+    try {
+      const snap = await getDoc(doc(db, 'admins', email));
+      renderPermissionCheckboxes(snap.exists() ? snap.data().permissions : null);
+    } catch (e2) { renderPermissionCheckboxes(null); }
+  });
+  document.getElementById('savePermissionsBtn')?.addEventListener('click', async () => {
+    const email = document.getElementById('permAdminSelect').value;
+    const msg = document.getElementById('permMsg');
+    if (!email) return;
+    const selected = Array.from(document.querySelectorAll('#permCheckboxGrid input:checked')).map(cb => cb.value);
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Saving…';
+    try {
+      await updateDoc(doc(db, 'admins', email), { permissions: selected });
+      msg.style.color = 'var(--blue)'; msg.textContent = `Saved — ${email} now has access to ${selected.length} section${selected.length === 1 ? '' : 's'}.`;
+      logAdminActivity('Updated admin access', email);
+    } catch (err) {
+      msg.style.color = 'var(--pink)'; msg.textContent = 'Could not save. Check Firestore Rules are published.';
     }
   });
 
