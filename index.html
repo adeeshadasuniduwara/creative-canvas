@@ -688,6 +688,10 @@
   #chatMicBtn.listening{background:var(--pink);color:#fff;border-color:var(--pink);animation:micPulse 1.2s ease-in-out infinite;}
   @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,61,119,0.5);}50%{box-shadow:0 0 0 8px rgba(255,61,119,0);}}
   .chat-typing{display:flex;gap:3px;padding:10px 13px;background:var(--bg-alt);border-radius:14px;align-self:flex-start;width:fit-content;}
+  .chat-feedback-row{display:flex;gap:6px;align-self:flex-start;margin:-4px 0 4px 2px;}
+  .chat-feedback-row button{background:none;border:none;cursor:pointer;font-size:13px;opacity:0.45;transition:opacity .2s ease, transform .2s ease;padding:2px 4px;}
+  .chat-feedback-row button:hover{opacity:0.85;transform:scale(1.15);}
+  .chat-feedback-row button.picked{opacity:1;transform:scale(1.15);}
   .chat-typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:chatTyping 1.2s infinite;}
   .chat-typing span:nth-child(2){animation-delay:.2s;}
   .chat-typing span:nth-child(3){animation-delay:.4s;}
@@ -4796,6 +4800,19 @@
     en: "Hi! 👋 I'm the Canvas Assistant — ask me anything about our services, packages, or booking process. You can also tap the mic to talk to me!",
     si: "ආයුබෝවන්! 👋 මම Canvas Assistant — services, packages, booking ගැන ඕනම දෙයක් අහන්න. Mic එකෙන් කථා කරලත් අහන්න පුළුවන්!"
   };
+  function getPersonalizedChatGreeting() {
+    const hour = new Date().getHours();
+    const timeGreetEn = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const timeGreetSi = hour < 12 ? 'සුභ උදෑසනක්' : hour < 17 ? 'සුභ දහවලක්' : 'සුභ සන්ධ්‍යාවක්';
+    const firstName = (typeof currentUser !== 'undefined' && currentUser && currentUser.displayName)
+      ? currentUser.displayName.split(' ')[0] : null;
+    if (firstName) {
+      return chatLang === 'si'
+        ? `${timeGreetSi}, ${firstName}! 👋 ආයෙත් ඇවිත් සතුටුයි. මොනවද අද උදව් කරන්නේ?`
+        : `${timeGreetEn}, ${firstName}! 👋 Great to see you again — what can I help with today?`;
+    }
+    return chatGreeting[chatLang];
+  }
   const chatSuggestionsList = {
     en: ['What services do you offer?', 'How much does it cost?', 'How do I book?', 'Any discounts?'],
     si: ['මොනවද services?', 'ගාන කීයද?', 'Book කරන්නෙ කොහොමද?', 'Discount තියෙනවද?']
@@ -4840,12 +4857,25 @@
     return bestScore >= 3 ? best : null;
   }
 
-  function addChatMsg(text, who) {
+  function addChatMsg(text, who, logId) {
     const body = document.getElementById('chatBody');
     const el = document.createElement('div');
     el.className = 'chat-msg ' + who;
     el.textContent = text;
     body.appendChild(el);
+    if (who === 'bot' && logId && firebaseReady) {
+      const fb = document.createElement('div');
+      fb.className = 'chat-feedback-row';
+      fb.innerHTML = `<button type="button" data-fb="up" aria-label="Helpful">👍</button><button type="button" data-fb="down" aria-label="Not helpful">👎</button>`;
+      fb.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          updateDoc(doc(db, 'chatLogs', logId), { feedback: btn.dataset.fb }).catch(() => {});
+          fb.querySelectorAll('button').forEach(b => b.classList.remove('picked'));
+          btn.classList.add('picked');
+        });
+      });
+      body.appendChild(fb);
+    }
     body.scrollTop = body.scrollHeight;
   }
 
@@ -4866,13 +4896,14 @@
   ];
 
   async function logChatQuestion(text, matched) {
-    if (!firebaseReady) return;
+    if (!firebaseReady) return null;
     try {
-      await addDoc(collection(db, 'chatLogs'), {
+      const ref = await addDoc(collection(db, 'chatLogs'), {
         text: text.slice(0, 300), matched: !!matched, matchedKey: matched ? (matched.key || 'general') : null,
         createdAt: serverTimestamp()
       });
-    } catch (e) { /* non-critical, never block the chat over logging */ }
+      return ref.id;
+    } catch (e) { return null; /* non-critical, never block the chat over logging */ }
   }
 
   async function renderPackageCarousel() {
@@ -4930,24 +4961,68 @@
     body.scrollTop = body.scrollHeight;
   }
 
+  const chatMsgTimestamps = [];
+  const chatBadWords = ['fuck', 'shit', 'bitch', 'asshole', 'bastard', 'wanker', 'ponnaya', 'hutta', 'pako']; // common EN/Sinhala-transliterated profanity
+  function isProfane(text) {
+    const lower = text.toLowerCase();
+    return chatBadWords.some(w => lower.includes(w));
+  }
+  const chatQuickTopics = {
+    en: [{ label: '📸 Packages', q: 'What packages do you offer?' }, { label: '📅 Book Now', q: 'How do I book?' }, { label: '💬 Talk to a human', q: '__whatsapp__' }],
+    si: [{ label: '📸 Packages', q: 'ලබාදෙන services මොනවද?' }, { label: '📅 Book Now', q: 'Book කරන්නේ කොහොමද?' }, { label: '💬 කෙනෙක් එක්ක කතා කරන්න', q: '__whatsapp__' }]
+  };
+  function renderPostAnswerChips() {
+    const body = document.getElementById('chatBody');
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-suggestions chat-post-chips';
+    wrap.innerHTML = chatQuickTopics[chatLang].map(t => `<button type="button" class="chat-suggestion-btn" data-q="${escapeHtml(t.q)}">${t.label}</button>`).join('');
+    wrap.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.q === '__whatsapp__') { renderWhatsAppHandoff(''); return; }
+        sendChatMessage(btn.dataset.q);
+      });
+    });
+    body.appendChild(wrap);
+    body.scrollTop = body.scrollHeight;
+  }
+
   function sendChatMessage(text) {
     if (!text.trim()) return;
+
+    // Rate-limit: more than 6 messages within 10 seconds looks like spam/abuse
+    const now = Date.now();
+    while (chatMsgTimestamps.length && now - chatMsgTimestamps[0] > 10000) chatMsgTimestamps.shift();
+    if (chatMsgTimestamps.length >= 6) {
+      addChatMsg(chatLang === 'si' ? 'ටිකක් හෙමින්! මොහොතක් ඉන්නකෝ 🙏' : "You're sending messages a bit fast — please slow down a little 🙏", 'bot');
+      return;
+    }
+    chatMsgTimestamps.push(now);
+
     addChatMsg(text, 'user');
     document.getElementById('chatInput').value = '';
     const body = document.getElementById('chatBody');
+
+    if (isProfane(text)) {
+      addChatMsg(chatLang === 'si'
+        ? 'කරුණාකර වචන තෝරලා කතා කරමු 🙏 ඔබට උදව් කරන්න මම මෙතන ඉන්නවා.'
+        : "Let's keep things friendly 🙏 I'm here to help — what would you like to know?", 'bot');
+      return;
+    }
+
     const typing = document.createElement('div');
     typing.className = 'chat-typing';
     typing.innerHTML = '<span></span><span></span><span></span>';
     body.appendChild(typing);
     body.scrollTop = body.scrollHeight;
-    setTimeout(() => {
+    setTimeout(async () => {
       typing.remove();
       const match = matchChatKB(text);
-      logChatQuestion(text, match);
-      addChatMsg(match ? match[chatLang] : chatFallback[chatLang], 'bot');
+      const logId = await logChatQuestion(text, match);
+      addChatMsg(match ? match[chatLang] : chatFallback[chatLang], 'bot', logId);
       if (match && match.key === 'packages') renderPackageCarousel();
       if (match && match.key === 'booking') renderBookingOccasionChips();
       if (!match) renderWhatsAppHandoff(text);
+      else renderPostAnswerChips();
     }, 500 + Math.random() * 500);
   }
 
@@ -4982,24 +5057,36 @@
     }, { passive: true });
   })();
 
-  (function initProactiveChatGreeting() {
+  function showProactiveChatBubble(customMsg) {
     if (localStorage.getItem('ccs-chat-proactive-dismissed')) return;
-    setTimeout(() => {
-      const fab = document.getElementById('chatFab');
-      const win = document.getElementById('chatWindow');
-      if (!fab || win.classList.contains('open')) return;
-      const rect = fab.getBoundingClientRect();
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-proactive-bubble';
-      bubble.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
-      bubble.style.bottom = (window.innerHeight - rect.top + 12) + 'px';
-      bubble.innerHTML = `<span class="close-x">&times;</span>${chatLang === 'si' ? 'උදව් ඕනද? 👋 මගෙන් අහන්න!' : 'Need help? 👋 Ask me anything!'}`;
-      document.body.appendChild(bubble);
-      const dismiss = () => { bubble.remove(); localStorage.setItem('ccs-chat-proactive-dismissed', '1'); };
-      bubble.querySelector('.close-x').addEventListener('click', (e) => { e.stopPropagation(); dismiss(); });
-      bubble.addEventListener('click', () => { dismiss(); fab.click(); });
-      setTimeout(() => { if (document.body.contains(bubble)) dismiss(); }, 12000);
-    }, 25000);
+    const fab = document.getElementById('chatFab');
+    const win = document.getElementById('chatWindow');
+    if (!fab || win.classList.contains('open') || document.querySelector('.chat-proactive-bubble')) return;
+    const rect = fab.getBoundingClientRect();
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-proactive-bubble';
+    bubble.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
+    bubble.style.bottom = (window.innerHeight - rect.top + 12) + 'px';
+    bubble.innerHTML = `<span class="close-x">&times;</span>${customMsg || (chatLang === 'si' ? 'උදව් ඕනද? 👋 මගෙන් අහන්න!' : 'Need help? 👋 Ask me anything!')}`;
+    document.body.appendChild(bubble);
+    const dismiss = () => { bubble.remove(); localStorage.setItem('ccs-chat-proactive-dismissed', '1'); };
+    bubble.querySelector('.close-x').addEventListener('click', (e) => { e.stopPropagation(); dismiss(); });
+    bubble.addEventListener('click', () => { dismiss(); fab.click(); });
+    setTimeout(() => { if (document.body.contains(bubble)) dismiss(); }, 12000);
+  }
+  (function initProactiveChatGreeting() {
+    setTimeout(() => showProactiveChatBubble(), 25000);
+  })();
+
+  // Exit-intent: cursor rushes toward the top of the browser (about to close tab/go back) — offer help once.
+  (function initExitIntentChatNudge() {
+    if (window.innerWidth < 768) return; // desktop cursor behavior only
+    let triggered = false;
+    document.addEventListener('mouseout', (e) => {
+      if (triggered || e.clientY > 8 || e.relatedTarget) return;
+      triggered = true;
+      showProactiveChatBubble(chatLang === 'si' ? 'යනවද? 👋 යන්න කලින් මොනවහරි අහන්නද?' : "Leaving already? 👋 Anything I can help with first?");
+    });
   })();
 
   (function initChatFabDrag() {
@@ -5012,7 +5099,7 @@
       const wasOpen = win.classList.contains('open');
       win.classList.toggle('open');
       if (!wasOpen && document.getElementById('chatBody').children.length === 0) {
-        addChatMsg(chatGreeting[chatLang], 'bot');
+        addChatMsg(getPersonalizedChatGreeting(), 'bot');
         renderChatSuggestions();
       }
     }
