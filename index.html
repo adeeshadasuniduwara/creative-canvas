@@ -348,14 +348,20 @@
     background:rgba(7,7,10,0.75);
     backdrop-filter:blur(14px);
     border-bottom:1px solid var(--line);
+    transition:box-shadow .3s ease;
   }
+  header.scrolled{box-shadow:0 8px 24px -12px rgba(0,0,0,0.4);}
+  header.scrolled nav{padding:8px 24px;}
+  header.scrolled .brand-mark img{width:30px;height:30px;}
+  header.scrolled .brand-mark span{font-size:13px;}
   nav{
     display:flex;align-items:center;justify-content:space-between;
     padding:12px 24px;max-width:1400px;margin:0 auto;
+    transition:padding .3s ease;
   }
   .brand-mark{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-  .brand-mark img{width:38px;height:38px;border-radius:8px;object-fit:cover;flex-shrink:0;}
-  .brand-mark span{font-weight:700;font-size:15px;letter-spacing:0.5px;white-space:nowrap;}
+  .brand-mark img{width:38px;height:38px;border-radius:8px;object-fit:cover;flex-shrink:0;transition:width .3s ease, height .3s ease;}
+  .brand-mark span{font-weight:700;font-size:15px;letter-spacing:0.5px;white-space:nowrap;transition:font-size .3s ease;}
   .nav-links{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:flex-end;flex-shrink:0;}
   .nav-links a{font-size:13.5px;font-weight:500;color:var(--muted);transition:color .25s;white-space:nowrap;position:relative;}
   .nav-links a:not(.nav-cta)::after{content:'';position:absolute;left:0;bottom:-5px;width:0;height:2px;background:var(--grad);border-radius:2px;transition:width .3s ease;}
@@ -508,6 +514,40 @@
   }
   .portfolio-item:hover .p-preview-hint{opacity:1;}
   .portfolio-item .p-preview-hint svg{width:18px;height:18px;}
+  .p-fav-btn{
+    position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;border:none;
+    background:rgba(0,0,0,0.45);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;opacity:0;transition:opacity .25s ease, transform .2s ease, background .2s ease;z-index:2;
+  }
+  .portfolio-item:hover .p-fav-btn, .p-fav-btn.is-fav{opacity:1;}
+  .p-fav-btn.is-fav{color:var(--pink);background:rgba(0,0,0,0.6);}
+  .p-fav-btn:hover{transform:scale(1.15);}
+  @keyframes heartBurst{0%{transform:translate(-50%,-50%) scale(0.3);opacity:0;}30%{transform:translate(-50%,-50%) scale(1.3);opacity:1;}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0;}}
+  .p-heart-burst{
+    position:absolute;top:50%;left:50%;font-size:56px;color:var(--pink);pointer-events:none;z-index:3;
+    animation:heartBurst .65s ease-out both;text-shadow:0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  #mobileTabBar{
+    display:none;position:fixed;left:0;right:0;bottom:0;z-index:230;background:var(--card);
+    border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    align-items:stretch;justify-content:space-around;backdrop-filter:blur(14px);
+  }
+  #mobileTabBar a{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;
+    color:var(--muted);font-size:10px;font-weight:600;position:relative;
+  }
+  #mobileTabBar a svg{width:20px;height:20px;}
+  #mobileTabBar a.mtb-active{color:var(--pink);}
+  .mtb-badge{
+    position:absolute;top:2px;right:calc(50% - 18px);background:var(--pink);color:#fff;font-size:9px;
+    font-weight:700;min-width:14px;height:14px;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 3px;
+  }
+  @media(max-width:768px){
+    #mobileTabBar{display:flex;}
+    .cart-fab, .chat-fab{bottom:80px;}
+    #backToTopBtn{bottom:150px;}
+  }
   #lightboxContent img, #lightboxContent iframe{max-width:90vw;max-height:85vh;border-radius:12px;}
   #lightboxContent iframe{width:80vw;height:45vw;max-height:70vh;border:none;}
   .portfolio-tile:hover{border-color:var(--pink);color:var(--text);}
@@ -701,17 +741,27 @@
   .cart-fab svg{width:24px;height:24px;}
 
   #stickyCartBar{
-    display:none;position:fixed;left:0;right:0;bottom:0;z-index:240;
+    display:none;position:fixed;left:0;right:0;bottom:64px;z-index:225;
     background:var(--grad);color:#0a0a0d;border:none;padding:14px 20px;
     align-items:center;justify-content:space-between;font-family:'Inter';font-weight:700;font-size:14px;
     box-shadow:0 -10px 30px -10px rgba(0,0,0,0.4);cursor:pointer;
-    padding-bottom:calc(14px + env(safe-area-inset-bottom));
   }
   #stickyCartBar.show{display:flex;animation:stickyCartSlideUp .35s ease both;}
   @keyframes stickyCartSlideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
   #stickyCartBarText{opacity:0.85;font-weight:600;font-size:12.5px;}
   #stickyCartBarTotal{font-size:16px;}
   @media(min-width:769px){ #stickyCartBar{display:none !important;} }
+  #backToTopBtn{
+    position:fixed;bottom:96px;right:24px;z-index:245;width:42px;height:42px;border-radius:50%;
+    background:var(--card);border:1px solid var(--line);color:var(--text);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px -10px rgba(0,0,0,0.4);
+    opacity:0;transform:translateY(10px);transition:opacity .3s ease, transform .3s ease, border-color .2s ease;pointer-events:none;
+  }
+  #backToTopBtn.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+  #backToTopBtn:hover{border-color:var(--pink);transform:translateY(-3px);}
+  @media(max-width:768px){ #backToTopBtn{bottom:150px;} body{padding-bottom:64px;} }
+  .nav-links a.nav-active{color:var(--text);position:relative;}
+  .nav-links a.nav-active::after{content:'';position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--grad);border-radius:2px;}
 
   /* ---------- Chat Assistant ---------- */
   .chat-fab{
@@ -1722,6 +1772,17 @@
   <span class="cart-count" id="cartCount" style="display:none;">0</span>
 </button>
 
+<nav id="mobileTabBar" aria-label="Mobile navigation">
+  <a href="#" data-tab-target="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span>Home</span></a>
+  <a href="#shop" data-tab-target="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg><span>Packages</span></a>
+  <a href="#" id="mobileTabCart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>Cart</span><span class="mtb-badge" id="mobileTabCartBadge" style="display:none;">0</span></a>
+  <a href="#" id="mobileTabAccount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></a>
+</nav>
+
+<button type="button" id="backToTopBtn" aria-label="Back to top" style="display:none;">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+</button>
+
 <button type="button" id="stickyCartBar" style="display:none;">
   <span id="stickyCartBarText">0 items</span>
   <span id="stickyCartBarTotal">Rs. 0</span>
@@ -1866,6 +1927,23 @@
   })();
 
   applyThemePreference(localStorage.getItem('ccs-theme') || 'system', false);
+
+  // Keyboard shortcuts: Esc closes any open modal/dropdown, "/" focuses search (package search if visible, else chat)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay').forEach(m => { if (m.style.display !== 'none') m.style.display = 'none'; });
+      document.getElementById('notifDropdown')?.classList.remove('open');
+      document.getElementById('chatWindow')?.classList.remove('open');
+      document.body.style.overflow = '';
+      return;
+    }
+    if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+      const pkgSearch = document.getElementById('packageSearchInput');
+      const isVisible = pkgSearch && pkgSearch.getBoundingClientRect().top < window.innerHeight && pkgSearch.getBoundingClientRect().bottom > 0;
+      if (isVisible) { e.preventDefault(); pkgSearch.focus(); }
+      else { e.preventDefault(); document.getElementById('chatFab')?.click(); document.getElementById('chatInput')?.focus(); }
+    }
+  });
 
   // Manual "Reduce Motion" toggle — for people who want animations off regardless of OS setting
   (function initReduceMotionToggle() {
@@ -4655,6 +4733,25 @@
     return m ? `https://player.vimeo.com/video/${m[1]}` : null;
   }
 
+  function getPortfolioFavs() {
+    try { return JSON.parse(localStorage.getItem('ccs-portfolio-favs') || '[]'); } catch (e) { return []; }
+  }
+  function togglePortfolioFav(id, itemEl) {
+    let favs = getPortfolioFavs();
+    const btn = itemEl.querySelector('.p-fav-btn');
+    const nowFav = !favs.includes(id);
+    favs = nowFav ? [...favs, id] : favs.filter(f => f !== id);
+    localStorage.setItem('ccs-portfolio-favs', JSON.stringify(favs));
+    btn.classList.toggle('is-fav', nowFav);
+    if (nowFav) {
+      const burst = document.createElement('div');
+      burst.className = 'p-heart-burst';
+      burst.textContent = '♥';
+      itemEl.appendChild(burst);
+      setTimeout(() => burst.remove(), 700);
+    }
+  }
+
   async function loadPortfolio() {
     const grid = document.getElementById('portfolioGrid');
     if (!firebaseReady) return;
@@ -4666,17 +4763,36 @@
         return;
       }
       grid.innerHTML = '';
+      const favIds = getPortfolioFavs();
       snap.forEach(docSnap => {
         const p = docSnap.data();
         const isVideo = !!p.videoUrl;
+        const isFav = favIds.includes(docSnap.id);
         const item = document.createElement('div');
         item.className = 'portfolio-item reveal in-view';
+        item.dataset.favId = docSnap.id;
         item.innerHTML = `
           <img src="${p.image || ''}" alt="${escapeHtml(p.caption || 'Portfolio work')} — Creative Canvas Studio photography and videography portfolio, Sri Lanka" loading="lazy">
           ${isVideo ? `<div class="play-badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.35)"/><path d="M10 8l6 4-6 4z"/></svg></div>` : `<div class="p-preview-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Preview</div>`}
+          <button type="button" class="p-fav-btn ${isFav ? 'is-fav' : ''}" aria-label="Favorite this photo" title="Double-tap the photo to favorite">♥</button>
           ${p.caption ? `<div class="p-caption">${escapeHtml(p.caption)}</div>` : ''}
         `;
-        item.addEventListener('click', () => openLightbox(p));
+        // Single click opens the lightbox; a fast double click/tap instead toggles favorite (with a heart-burst animation).
+        let clickTimer = null;
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.p-fav-btn')) return; // handled separately below
+          if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+            togglePortfolioFav(docSnap.id, item);
+          } else {
+            clickTimer = setTimeout(() => { clickTimer = null; openLightbox(p); }, 260);
+          }
+        });
+        item.querySelector('.p-fav-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          togglePortfolioFav(docSnap.id, item);
+        });
         grid.appendChild(item);
       });
     } catch (err) { grid.innerHTML = errorStateHtml("Couldn't load the portfolio right now — please refresh the page."); }
@@ -4769,6 +4885,8 @@
     const countEl = document.getElementById('cartCount');
     countEl.textContent = count;
     countEl.style.display = count > 0 ? 'flex' : 'none';
+    const mtbBadge = document.getElementById('mobileTabCartBadge');
+    if (mtbBadge) { mtbBadge.textContent = count; mtbBadge.style.display = count > 0 ? 'flex' : 'none'; }
     updateStickyCartBar();
 
     const list = document.getElementById('cartItemsList');
@@ -5424,6 +5542,79 @@
     document.getElementById('cartModal').style.display = 'flex';
   });
   window.addEventListener('scroll', () => { if (cart.length) updateStickyCartBar(); }, { passive: true });
+
+  (function initBackToTop() {
+    const btn = document.getElementById('backToTopBtn');
+    if (!btn) return;
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('show', window.scrollY > window.innerHeight * 0.8);
+    }, { passive: true });
+    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  })();
+
+  // Condensed sticky header — shrinks logo/padding once the page is scrolled
+  (function initStickyHeader() {
+    const header = document.querySelector('header');
+    if (!header) return;
+    window.addEventListener('scroll', () => {
+      header.classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+  })();
+
+  // Mobile bottom tab bar
+  (function initMobileTabBar() {
+    const bar = document.getElementById('mobileTabBar');
+    if (!bar) return;
+    bar.querySelector('[data-tab-target="top"]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('mobileTabCart')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      renderCart();
+      document.getElementById('cartModal').style.display = 'flex';
+    });
+    document.getElementById('mobileTabAccount')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentUser) { openMobileAccountSheet(); }
+      else { document.getElementById('authModal').style.display = 'flex'; }
+    });
+    const tabs = Array.from(bar.querySelectorAll('a[href^="#"]'));
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY;
+      if (y < window.innerHeight * 0.5) {
+        tabs.forEach(t => t.classList.toggle('mtb-active', t.dataset.tabTarget === 'top'));
+        return;
+      }
+      const shop = document.getElementById('shop');
+      if (shop) {
+        const inShop = shop.getBoundingClientRect().top < window.innerHeight * 0.6 && shop.getBoundingClientRect().bottom > 0;
+        tabs.forEach(t => t.classList.toggle('mtb-active', inShop && t.dataset.tabTarget === 'shop'));
+      }
+    }, { passive: true });
+  })();
+
+  // Highlight the nav link for whichever section is currently in view while scrolling
+  (function initActiveNavHighlight() {
+    const navLinks = Array.from(document.querySelectorAll('.nav-links a[href^="#"]'));
+    if (!navLinks.length) return;
+    const sections = navLinks
+      .map(a => ({ link: a, el: document.querySelector(a.getAttribute('href')) }))
+      .filter(s => s.el);
+    if (!sections.length) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const match = sections.find(s => s.el === entry.target);
+        if (!match) return;
+        if (entry.isIntersecting) {
+          navLinks.forEach(a => a.classList.remove('nav-active'));
+          match.link.classList.add('nav-active');
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+    sections.forEach(s => observer.observe(s.el));
+  })();
+
 
   function getOrGenerateDiscount(subtotal) {
     if (referralDiscountPercent === null) {
