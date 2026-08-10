@@ -663,6 +663,8 @@
   .chat-lang-toggle button{background:none;border:none;font-size:10.5px;font-weight:700;padding:4px 8px;border-radius:100px;cursor:pointer;color:#0a0a0d;opacity:.6;}
   .chat-lang-toggle button.active{background:#0a0a0d;color:#fff;opacity:1;}
   .chat-close{background:none;border:none;color:#0a0a0d;font-size:18px;cursor:pointer;}
+  .chat-clear-btn{background:none;border:none;color:#0a0a0d;opacity:0.7;cursor:pointer;display:flex;align-items:center;padding:4px;transition:opacity .2s ease;}
+  .chat-clear-btn:hover{opacity:1;}
   .chat-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
   .chat-msg{max-width:82%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.5;overflow-wrap:anywhere;}
   .chat-msg.bot{background:var(--bg-alt);align-self:flex-start;border-bottom-left-radius:4px;}
@@ -1611,7 +1613,7 @@
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
 </button>
 
-<div class="chat-window" id="chatWindow">
+<div class="chat-window" id="chatWindow" role="dialog" aria-label="Canvas Assistant chat">
   <div class="chat-header">
     <div class="chat-avatar">🤖</div>
     <b id="chatHeaderTitle">Canvas Assistant</b>
@@ -1619,16 +1621,19 @@
       <button type="button" id="chatLangEn" class="active">EN</button>
       <button type="button" id="chatLangSi">සිං</button>
     </div>
+    <button type="button" class="chat-clear-btn" id="chatClearBtn" aria-label="Clear chat history" title="Clear chat history">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+    </button>
     <button class="chat-close" id="chatClose" aria-label="Close chat">&times;</button>
   </div>
-  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-body" id="chatBody" role="log" aria-live="polite" aria-label="Chat messages"></div>
   <div class="chat-suggestions" id="chatSuggestions"></div>
   <div class="chat-input-row">
-    <input type="text" id="chatInput" placeholder="Ask about our services…">
+    <input type="text" id="chatInput" placeholder="Ask about our services…" aria-label="Type your question">
     <button type="button" id="chatMicBtn" aria-label="Speak your question">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
     </button>
-    <button type="button" id="chatSendBtn" aria-label="Send">
+    <button type="button" id="chatSendBtn" aria-label="Send message">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
     </button>
   </div>
@@ -4895,12 +4900,12 @@
     { label: '🚁 Drone', section: '🏢 Commercial, Food & Drone' }
   ];
 
-  async function logChatQuestion(text, matched) {
+  async function logChatQuestion(text, matched, priority) {
     if (!firebaseReady) return null;
     try {
       const ref = await addDoc(collection(db, 'chatLogs'), {
         text: text.slice(0, 300), matched: !!matched, matchedKey: matched ? (matched.key || 'general') : null,
-        createdAt: serverTimestamp()
+        priority: !!priority, createdAt: serverTimestamp()
       });
       return ref.id;
     } catch (e) { return null; /* non-critical, never block the chat over logging */ }
@@ -4967,6 +4972,14 @@
     const lower = text.toLowerCase();
     return chatBadWords.some(w => lower.includes(w));
   }
+  function containsSuspiciousLink(text) {
+    return /(https?:\/\/|www\.|\.(xyz|top|click|loan|win)\b)/i.test(text) && !/wa\.me|whatsapp\.com|maps\.app\.goo\.gl|goo\.gl\/maps/i.test(text);
+  }
+  const escalationWords = ['refund', 'complaint', 'complain', 'scam', 'terrible', 'awful', 'angry', 'furious', 'disappointed', 'cancel my order', 'not happy', 'unacceptable', 'lawyer', 'refund karanna', 'aiyoo'];
+  function isEscalation(text) {
+    const lower = text.toLowerCase();
+    return escalationWords.some(w => lower.includes(w));
+  }
   const chatQuickTopics = {
     en: [{ label: '📸 Packages', q: 'What packages do you offer?' }, { label: '📅 Book Now', q: 'How do I book?' }, { label: '💬 Talk to a human', q: '__whatsapp__' }],
     si: [{ label: '📸 Packages', q: 'ලබාදෙන services මොනවද?' }, { label: '📅 Book Now', q: 'Book කරන්නේ කොහොමද?' }, { label: '💬 කෙනෙක් එක්ක කතා කරන්න', q: '__whatsapp__' }]
@@ -5008,7 +5021,14 @@
         : "Let's keep things friendly 🙏 I'm here to help — what would you like to know?", 'bot');
       return;
     }
+    if (containsSuspiciousLink(text)) {
+      addChatMsg(chatLang === 'si'
+        ? 'සමාවෙන්න, links වලට reply කරන්න බෑ. ඔබේ ප්‍රශ්නය text එකෙන්ම type කරන්න.'
+        : "Sorry, I can't process links here — please type your question in plain text.", 'bot');
+      return;
+    }
 
+    const escalated = isEscalation(text);
     const typing = document.createElement('div');
     typing.className = 'chat-typing';
     typing.innerHTML = '<span></span><span></span><span></span>';
@@ -5017,7 +5037,14 @@
     setTimeout(async () => {
       typing.remove();
       const match = matchChatKB(text);
-      const logId = await logChatQuestion(text, match);
+      const logId = await logChatQuestion(text, match, escalated);
+      if (escalated) {
+        addChatMsg(chatLang === 'si'
+          ? 'මේක serious කරුණක් වගේ පේනවා — කරුණාකර අපේ team එකට කෙලින්ම කතා කරන්න, ඉක්මනටම help කරන්නම්.'
+          : "This sounds important — let's get you straight to our team so we can help right away.", 'bot', logId);
+        renderWhatsAppHandoff(text);
+        return;
+      }
       addChatMsg(match ? match[chatLang] : chatFallback[chatLang], 'bot', logId);
       if (match && match.key === 'packages') renderPackageCarousel();
       if (match && match.key === 'booking') renderBookingOccasionChips();
@@ -5074,8 +5101,25 @@
     bubble.addEventListener('click', () => { dismiss(); fab.click(); });
     setTimeout(() => { if (document.body.contains(bubble)) dismiss(); }, 12000);
   }
+  const chatIdleFillers = {
+    en: [
+      'Need help? 👋 Ask me anything!',
+      '📸 Tip: golden hour (just after sunrise or before sunset) gives the softest, most flattering light for portraits.',
+      '🇱🇰 Fun fact: Sri Lanka is home to 8 UNESCO World Heritage Sites — great backdrops for a shoot!',
+      "Still exploring? 👋 I'm happy to help you find the right package."
+    ],
+    si: [
+      'උදව් ඕනද? 👋 මගෙන් අහන්න!',
+      '📸 Tip: හිරු උදාවෙන් පස්සේ/බැසීමට කලින් ("golden hour") එකේ ලස්සනම ලයිට් එක portrait වලට.',
+      '🇱🇰 Fun fact: ලංකාවේ UNESCO World Heritage Sites 8ක් තියෙනවා — shoot එකකට ලස්සන backgrounds!',
+      'තාම බලනවද? 👋 හරි package එක හොයාගන්න උදව් කරන්නම්.'
+    ]
+  };
   (function initProactiveChatGreeting() {
-    setTimeout(() => showProactiveChatBubble(), 25000);
+    setTimeout(() => {
+      const list = chatIdleFillers[chatLang];
+      showProactiveChatBubble(list[Math.floor(Math.random() * list.length)]);
+    }, 25000);
   })();
 
   // Exit-intent: cursor rushes toward the top of the browser (about to close tab/go back) — offer help once.
@@ -5148,6 +5192,14 @@
     });
   })();
   document.getElementById('chatClose')?.addEventListener('click', () => document.getElementById('chatWindow').classList.remove('open'));
+  document.getElementById('chatClearBtn')?.addEventListener('click', () => {
+    if (!confirm(chatLang === 'si' ? 'Chat history එක clear කරන්නද?' : 'Clear this chat history?')) return;
+    const body = document.getElementById('chatBody');
+    body.innerHTML = '';
+    document.getElementById('chatSuggestions').innerHTML = '';
+    addChatMsg(getPersonalizedChatGreeting(), 'bot');
+    renderChatSuggestions();
+  });
   document.getElementById('chatSendBtn')?.addEventListener('click', () => sendChatMessage(document.getElementById('chatInput').value));
 
   (function initChatVoiceInput() {
