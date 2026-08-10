@@ -101,6 +101,9 @@
     --purple:#8b2fe8;
     --blue:#2f9bf0;
     --grad: linear-gradient(90deg, var(--gold), var(--pink) 40%, var(--purple) 70%, var(--blue));
+    --gold-text: var(--gold); /* dark backgrounds already give this vivid gold plenty of contrast */
+    /* 8px spacing scale — used by newer components; kept alongside existing inline spacing for compatibility */
+    --sp-1:4px; --sp-2:8px; --sp-3:16px; --sp-4:24px; --sp-5:32px; --sp-6:48px;
   }
 
   /* ---------------- Site Loading Screen (adapted from Uiverse.io by jeremy_4982) ---------------- */
@@ -139,6 +142,16 @@
     #siteLoader .bubble, #siteLoader .bubble1, #siteLoader .bubble2, #siteLoader .bubble3, #siteLoader .bubble4{ animation:none; }
   }
 
+  /* ---------------- Custom Scrollbar (brand gradient) ---------------- */
+  html{scrollbar-width:thin;scrollbar-color:var(--pink) var(--bg-alt);}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-track{background:var(--bg-alt);}
+  ::-webkit-scrollbar-thumb{background:var(--grad);border-radius:100px;border:2px solid var(--bg-alt);background-clip:padding-box;}
+  ::-webkit-scrollbar-thumb:hover{border-width:1px;}
+  ::-webkit-scrollbar-corner{background:var(--bg-alt);}
+  /* Scrollable inner panels (chat, admin lists, modals) get a slimmer version */
+  .chat-body::-webkit-scrollbar, .modal-card::-webkit-scrollbar, .notif-dropdown::-webkit-scrollbar{width:7px;}
+
   body, .card, .product-card, .team-card, .why-item, .leaderboard-card, .review-card, .contact-box,
   .modal-card, .admin-order-row, nav, .cart-fab, .chat-fab, .chat-window, input, textarea, select,
   .btn-outline, .mini-btn, .theme-toggle-btn{
@@ -151,6 +164,7 @@
     --line:#e6e6ec;
     --text:#15151a;
     --muted:#63636e;
+    --gold-text:#8a6006; /* the vivid --gold fails WCAG AA contrast on white — this darker shade passes (5.6:1) while staying gold-toned */
   }
   /* Cards get a soft border + gentle shadow instead of relying on dark backgrounds for separation */
   html[data-theme="light"] .card,
@@ -259,7 +273,9 @@
     font-family:'Inter',sans-serif;
     overflow-x:hidden;
   }
-  h1,h2,h3,.brand{font-family:'Poppins',sans-serif;}
+  h1,h2,h3,.brand{font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:-0.2px;}
+  h4,h5,h6{font-family:'Inter',sans-serif;font-weight:700;}
+  p{font-weight:400;line-height:1.6;}
   a{color:inherit;text-decoration:none;}
   img{max-width:100%;display:block;}
   ::selection{background:var(--pink);color:#fff;}
@@ -277,8 +293,27 @@
   }
   @keyframes gradientShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
 
-  /* ---------- Scroll reveal ---------- */
-  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease, transform .7s ease;}
+  /* ---------------- Skeleton Loading Placeholders ---------------- */
+  @keyframes skeletonShimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+  .skeleton-card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;height:100%;
+  }
+  .skeleton-shape{
+    background:linear-gradient(90deg, var(--bg-alt) 25%, var(--line) 50%, var(--bg-alt) 75%);
+    background-size:200% 100%;animation:skeletonShimmer 1.6s ease-in-out infinite;
+  }
+  .skeleton-card .skeleton-shape.skel-img{width:100%;aspect-ratio:4/3;}
+  .skeleton-card .skeleton-body{padding:16px;}
+  .skeleton-card .skeleton-shape.skel-line{height:14px;border-radius:6px;margin-bottom:10px;}
+  .skeleton-card .skeleton-shape.skel-line.short{width:60%;}
+  .skeleton-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;}
+  @media(prefers-reduced-motion: reduce){ .skeleton-shape{animation:none;} }
+  .empty-state{grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--muted);}
+  .empty-state-icon{font-size:38px;margin-bottom:10px;opacity:0.7;}
+  .empty-state p{font-size:14px;margin:0;}
+
+
+  .reveal{opacity:0;transform:translateY(26px) scale(.98);filter:blur(4px);transition:opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1), filter .7s ease;}
   @keyframes gridFadeIn{from{opacity:0;transform:translateY(20px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
   .shop-grid > .product-card, .portfolio-grid > .portfolio-item, .team-grid > .team-card{animation:gridFadeIn .6s ease both;}
   .shop-grid > *:nth-child(1), .portfolio-grid > *:nth-child(1), .team-grid > *:nth-child(1){animation-delay:.04s;}
@@ -288,7 +323,7 @@
   .shop-grid > *:nth-child(5), .portfolio-grid > *:nth-child(5), .team-grid > *:nth-child(5){animation-delay:.24s;}
   .shop-grid > *:nth-child(6), .portfolio-grid > *:nth-child(6), .team-grid > *:nth-child(6){animation-delay:.29s;}
   .shop-grid > *:nth-child(n+7), .portfolio-grid > *:nth-child(n+7), .team-grid > *:nth-child(n+7){animation-delay:.34s;}
-  .reveal.in-view{opacity:1;transform:translateY(0);}
+  .reveal.in-view{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
 
   /* ---------- Nav ---------- */
   header{
@@ -474,7 +509,7 @@
   .rating-summary{display:flex;align-items:center;gap:24px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px 36px;margin-bottom:40px;flex-wrap:wrap;}
   .big-score{font-family:'Poppins';font-size:52px;font-weight:800;background:var(--grad);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:gradientShift 7s ease infinite;line-height:1;}
   .rating-summary-meta{display:flex;flex-direction:column;gap:4px;}
-  .big-stars{font-size:22px;letter-spacing:3px;color:var(--gold);}
+  .big-stars{font-size:22px;letter-spacing:3px;color:var(--gold-text);}
   .review-count{color:var(--muted);font-size:13.5px;}
   .review-form-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:36px;margin-bottom:48px;}
   .review-form-card h3{font-size:19px;font-weight:700;margin-bottom:22px;}
@@ -488,7 +523,7 @@
   .star-picker{display:flex;gap:6px;font-size:30px;color:var(--line);cursor:pointer;user-select:none;}
   .star-picker span{transition:color .2s, transform .2s;}
   .star-picker span:hover{transform:scale(1.15);}
-  .star-picker span.active{color:var(--gold);}
+  .star-picker span.active{color:var(--gold-text);}
   .file-label{font-size:13.5px;color:var(--muted);border:1px dashed var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .25s;}
   .file-label:hover{border-color:var(--pink);}
   .file-label input{display:none;}
@@ -499,7 +534,7 @@
   .review-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
   .review-delete-btn{background:none;border:none;cursor:pointer;font-size:14px;opacity:.6;margin-left:auto;flex-shrink:0;}
   .review-delete-btn:hover{opacity:1;}
-  .review-stars{color:var(--gold);font-size:15px;letter-spacing:2px;}
+  .review-stars{color:var(--gold-text);font-size:15px;letter-spacing:2px;}
   .review-name{font-weight:700;font-size:14px;}
   .review-comment{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:12px;}
   .review-img{border-radius:10px;border:1px solid var(--line);width:100%;object-fit:cover;max-height:180px;}
@@ -573,7 +608,7 @@
   .countdown-banner{background:var(--grad);border-radius:16px;padding:20px;text-align:center;margin-bottom:24px;color:#0a0a0d;}
   .countdown-banner .cd-nums{font-size:26px;font-weight:800;font-family:'Poppins';letter-spacing:1px;margin-top:6px;}
   .winner-banner{background:linear-gradient(135deg, rgba(255,176,32,0.15), rgba(139,47,232,0.1));border:1px solid var(--gold);border-radius:16px;padding:18px 22px;margin-bottom:20px;text-align:center;}
-  .winner-banner b{color:var(--gold);}
+  .winner-banner b{color:var(--gold-text);}
 
   /* ---------- Calendar ---------- */
   .calendar-year-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;}
@@ -605,7 +640,7 @@
     display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
     border-radius:100px;padding:9px 18px;font-size:12.5px;color:var(--muted);margin-bottom:28px;
   }
-  #todayRateBadge b{color:var(--gold);font-weight:700;}
+  #todayRateBadge b{color:var(--gold-text);font-weight:700;}
   .product-usd{font-size:12px;color:var(--muted);margin-top:2px;}
   .shop-categorized{display:flex;flex-direction:column;gap:40px;}
   .shop-category-block h3{font-size:18px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
@@ -638,6 +673,19 @@
     border:none;cursor:pointer;box-shadow:0 12px 30px -8px rgba(255,61,119,0.5);
   }
   .cart-fab svg{width:24px;height:24px;}
+
+  #stickyCartBar{
+    display:none;position:fixed;left:0;right:0;bottom:0;z-index:240;
+    background:var(--grad);color:#0a0a0d;border:none;padding:14px 20px;
+    align-items:center;justify-content:space-between;font-family:'Inter';font-weight:700;font-size:14px;
+    box-shadow:0 -10px 30px -10px rgba(0,0,0,0.4);cursor:pointer;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom));
+  }
+  #stickyCartBar.show{display:flex;animation:stickyCartSlideUp .35s ease both;}
+  @keyframes stickyCartSlideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  #stickyCartBarText{opacity:0.85;font-weight:600;font-size:12.5px;}
+  #stickyCartBarTotal{font-size:16px;}
+  @media(min-width:769px){ #stickyCartBar{display:none !important;} }
 
   /* ---------- Chat Assistant ---------- */
   .chat-fab{
@@ -675,7 +723,7 @@
   .chat-carousel-card{flex:0 0 100px;text-align:center;}
   .chat-carousel-card img{width:100px;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin-bottom:4px;}
   .chat-carousel-card b{display:block;font-size:10.5px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .chat-carousel-card span{display:block;font-size:10px;color:var(--gold);}
+  .chat-carousel-card span{display:block;font-size:10px;color:var(--gold-text);}
   .chat-proactive-bubble{
     position:fixed;z-index:249;background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:12px 16px;font-size:12.5px;max-width:200px;box-shadow:0 16px 40px -10px rgba(0,0,0,0.5);
@@ -834,7 +882,7 @@
   .tier-pick-btn:hover{border-color:var(--pink);transform:translateY(-2px);box-shadow:0 8px 20px -10px rgba(255,61,119,0.5);}
   .tier-pick-btn:active{transform:translateY(0);}
   .tier-pick-btn b{display:block;font-size:12.5px;}
-  .tier-pick-btn span{color:var(--gold);font-size:11.5px;}
+  .tier-pick-btn span{color:var(--gold-text);font-size:11.5px;}
   .admin-list-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
   .admin-order-row{
     display:flex;align-items:center;gap:10px;background:var(--bg-alt);border:1px solid var(--line);
@@ -928,8 +976,8 @@
           <a href="#" id="myOrdersBtn">My Orders</a>
           <a href="#" id="myReviewsBtn">My Reviews</a>
           <a href="#" id="referralsBtn" style="display:none;">🎁 Referrals</a>
-          <a href="#" id="walletBtn" style="display:none;color:var(--gold);">💰 My Wallet</a>
-          <a href="#" id="verifyEmailBtn" style="display:none;color:var(--gold);">⚠️ Verify Email</a>
+          <a href="#" id="walletBtn" style="display:none;color:var(--gold-text);">💰 My Wallet</a>
+          <a href="#" id="verifyEmailBtn" style="display:none;color:var(--gold-text);">⚠️ Verify Email</a>
           <a href="#" id="adminBtn" style="display:none;">Admin Panel</a>
           <a href="#" id="signOutBtn">Sign Out</a>
         </div>
@@ -952,8 +1000,8 @@
     <a href="#" class="mobile-sheet-item" id="mMyOrdersBtn">📦 My Orders</a>
     <a href="#" class="mobile-sheet-item" id="mMyReviewsBtn">⭐ My Reviews</a>
     <a href="#" class="mobile-sheet-item" id="mReferralsBtn">🎁 Referrals</a>
-    <a href="#" class="mobile-sheet-item" id="mWalletBtn" style="display:none;color:var(--gold);">💰 My Wallet</a>
-    <a href="#" class="mobile-sheet-item" id="mVerifyEmailBtn" style="display:none;color:var(--gold);">⚠️ Verify Email</a>
+    <a href="#" class="mobile-sheet-item" id="mWalletBtn" style="display:none;color:var(--gold-text);">💰 My Wallet</a>
+    <a href="#" class="mobile-sheet-item" id="mVerifyEmailBtn" style="display:none;color:var(--gold-text);">⚠️ Verify Email</a>
     <a href="#" class="mobile-sheet-item" id="mAdminBtn" style="display:none;">🛠️ Admin Panel</a>
     <a href="#" class="mobile-sheet-item danger" id="mSignOutBtn">Sign Out</a>
   </div>
@@ -1150,7 +1198,7 @@
       <h2>Booking Calendar</h2>
       <p>Dates highlighted in pink already have a shoot booked — everything else is open.</p>
     </div>
-    <p id="calendarAdminHint" style="display:none;color:var(--gold);font-size:12.5px;text-align:center;margin-bottom:14px;">✏️ Admin mode: click any date to mark it booked/free.</p>
+    <p id="calendarAdminHint" style="display:none;color:var(--gold-text);font-size:12.5px;text-align:center;margin-bottom:14px;">✏️ Admin mode: click any date to mark it booked/free.</p>
     <div class="calendar-year-grid reveal" id="calendarYearGrid">
       <p style="color:var(--muted);font-size:14px;">Loading calendar…</p>
     </div>
@@ -1348,7 +1396,10 @@
   <div class="modal-card" id="adminModalCard">
     <button class="modal-close" id="adminModalClose" aria-label="Close">&times;</button>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
-      <h3 style="font-size:19px;font-weight:700;margin:0;">Admin — Orders</h3>
+      <div>
+        <p id="adminBreadcrumb" style="font-size:12px;color:var(--muted);margin:0 0 4px;">Admin Panel <span style="opacity:0.5;">›</span> Orders</p>
+        <h3 style="font-size:19px;font-weight:700;margin:0;" id="adminPanelTitle">Admin — Orders</h3>
+      </div>
       <button type="button" id="exportBackupBtn" class="mini-btn" style="display:none;">⬇️ Backup All Data</button>
     </div>
     <div id="adminStatsBar" class="ref-stat-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
@@ -1601,7 +1652,7 @@
     <button class="modal-close" id="otpClose" aria-label="Close">&times;</button>
     <h3 style="font-size:19px;font-weight:700;margin-bottom:8px;">Verify Your Email</h3>
     <p style="color:var(--muted);font-size:13.5px;margin-bottom:8px;">We sent a 6-digit code to <b id="otpEmailLabel" style="color:var(--text);"></b></p>
-    <p style="color:var(--gold);font-size:12px;margin-bottom:22px;">📩 Don't see it in your inbox? Please check your Spam / Junk folder too.</p>
+    <p style="color:var(--gold-text);font-size:12px;margin-bottom:22px;">📩 Don't see it in your inbox? Please check your Spam / Junk folder too.</p>
     <input type="text" id="otpCodeInput" class="otp-input" maxlength="6" inputmode="numeric" placeholder="------">
     <button type="button" class="btn btn-primary" id="otpVerifyBtn" style="width:100%;justify-content:center;">Verify</button>
     <p id="otpMsg" style="font-size:13px;min-height:16px;margin-top:12px;"></p>
@@ -1644,6 +1695,11 @@
   <span class="cart-count" id="cartCount" style="display:none;">0</span>
 </button>
 
+<button type="button" id="stickyCartBar" style="display:none;">
+  <span id="stickyCartBarText">0 items</span>
+  <span id="stickyCartBarTotal">Rs. 0</span>
+</button>
+
 <div class="modal-overlay" id="cartModal" style="display:none;">
   <div class="modal-card" style="max-width:420px;">
     <button class="modal-close" id="cartClose" aria-label="Close">&times;</button>
@@ -1671,7 +1727,7 @@
       </div>
       <div id="advanceNowPanel" style="display:none;">
         <div class="pay-method">
-          <div class="pay-method-head" style="color:var(--gold);">🟡 Binance Pay</div>
+          <div class="pay-method-head" style="color:var(--gold-text);">🟡 Binance Pay</div>
           <div class="pay-row"><div class="pay-row-text"><span class="pay-label">Binance ID</span>1247653592</div><button type="button" class="copy-btn" data-copy="1247653592">Copy</button></div>
           <div class="pay-row"><div class="pay-row-text"><span class="pay-label">Name</span>Adeesha Dasun</div><button type="button" class="copy-btn" data-copy="Adeesha Dasun">Copy</button></div>
         </div>
@@ -2753,13 +2809,13 @@
             <div><div class="val">${countSnap.size}</div><div class="lbl">Total Referred</div></div>
             <div><div class="val">${d.hasReferralDiscount ? '🎉' : '—'}</div><div class="lbl">${d.hasReferralDiscount ? 'Discount Ready!' : 'No discount yet'}</div></div>
           </div>
-          ${d.hasReferralDiscount ? '<p style="font-size:12.5px;color:var(--gold);">You won last month\'s leaderboard! Add a package to your cart to see your surprise discount at checkout.</p>' : ''}
+          ${d.hasReferralDiscount ? '<p style="font-size:12.5px;color:var(--gold-text);">You won last month\'s leaderboard! Add a package to your cart to see your surprise discount at checkout.</p>' : ''}
         `;
         body.querySelectorAll('.copy-btn').forEach(btn => btn.addEventListener('click', async () => {
           try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1500); } catch (e) {}
         }));
       } else if (d.referralRequestStatus === 'requested') {
-        body.innerHTML = `<p style="color:var(--gold);font-size:14px;">⏳ Your request is pending review. We'll get back to you within a day or two!</p>`;
+        body.innerHTML = `<p style="color:var(--gold-text);font-size:14px;">⏳ Your request is pending review. We'll get back to you within a day or two!</p>`;
       } else {
         const waMsg = `Hi Creative Canvas Studio! 🎨✨\n\nI'd love to join your Referral Program and start sharing your amazing work with friends and family.\n\nCould you please set up my referral account?\n\nMy name: ${currentUser.displayName || ''}\nMy email: ${currentUser.email}\n\nLooking forward to it! 🙌`;
         body.innerHTML = `
@@ -2818,14 +2874,14 @@
       actionHtml = `<a href="${o.driveLink}" target="_blank" rel="noopener" class="btn btn-primary">Open Drive Link</a>`;
     } else if (isReady && !isPaid) {
       if (o.paymentStatus === 'proof_submitted') {
-        actionHtml = `<p style="color:var(--gold);font-size:13px;margin-top:8px;">⏳ Payment proof submitted — under review. Your download link will appear here once approved.</p>`;
+        actionHtml = `<p style="color:var(--gold-text);font-size:13px;margin-top:8px;">⏳ Payment proof submitted — under review. Your download link will appear here once approved.</p>`;
       } else {
         actionHtml = `
           <div class="payment-panel" style="margin-top:14px;border-top:1px solid var(--line);padding-top:16px;">
             <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Your work is ready! Please clear the pending amount to unlock your download link.</p>
 
             <div class="pay-method">
-              <div class="pay-method-head" style="color:var(--gold);">🟡 Binance Pay</div>
+              <div class="pay-method-head" style="color:var(--gold-text);">🟡 Binance Pay</div>
               <div class="pay-row">
                 <div class="pay-row-text"><span class="pay-label">Binance ID</span>1247653592</div>
                 <button type="button" class="copy-btn" data-copy="1247653592">Copy</button>
@@ -3086,7 +3142,7 @@
       const q = query(ordersCol, where('customerEmail', '==', currentUser.email.toLowerCase()));
       const snap = await getDocs(q);
       list.innerHTML = snap.empty
-        ? '<p style="color:var(--muted);font-size:14px;">No orders yet. Once we start your project, it will show up here.</p>'
+        ? emptyStateHtml('🧾', "No orders yet. Once we start your project, it will show up here.")
         : snap.docs.map(d => orderCardHtml(d.data(), d.id, rate)).join('');
       attachProofHandlers();
     } catch (err) {
@@ -3115,7 +3171,7 @@
         const needsPayment = pending > 0 && o.paymentStatus !== 'approved';
         let paymentBadge = '';
         if (pending <= 0 || o.paymentStatus === 'approved') paymentBadge = '<span class="order-badge ready">Paid</span>';
-        else if (o.paymentStatus === 'proof_submitted') paymentBadge = '<span class="order-badge progress" style="color:var(--gold);">Proof Submitted</span>';
+        else if (o.paymentStatus === 'proof_submitted') paymentBadge = '<span class="order-badge progress" style="color:var(--gold-text);">Proof Submitted</span>';
         else paymentBadge = '<span class="order-badge progress">Unpaid</span>';
 
         const row = document.createElement('div');
@@ -3123,7 +3179,7 @@
         row.dataset.search = ((o.customerEmail || '') + ' ' + (o.title || '') + ' ' + (o.orderNumber || '')).toLowerCase();
         row.innerHTML = `
           <div class="info">
-            <b>${o.orderNumber ? `<span style="color:var(--gold);">${o.orderNumber}</span> — ` : ''}${escapeHtml(o.title || 'Order')}</b>
+            <b>${o.orderNumber ? `<span style="color:var(--gold-text);">${o.orderNumber}</span> — ` : ''}${escapeHtml(o.title || 'Order')}</b>
             <span>${escapeHtml(o.customerEmail || '')} · ${o.days} days · Rs. ${(o.totalAmount||0).toLocaleString()} (Adv. Rs. ${(o.advancePayment||0).toLocaleString()}) ${paymentBadge}</span>
           </div>
           <div class="actions">
@@ -3487,10 +3543,19 @@
 
   const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity', 'adminTabChatInsights'];
   const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView', adminTabChatInsights: 'adminChatInsightsView' };
+  const adminTabLabels = {
+    adminTabOrders: 'Orders', adminTabCustomers: 'Customers', adminTabProducts: 'Packages',
+    adminTabPortfolio: 'Portfolio', adminTabTeam: 'Team', adminTabAdmins: 'Admins',
+    adminTabReferrals: 'Referrals', adminTabWallets: 'Wallets', adminTabBookings: 'Booking Requests',
+    adminTabWaitlist: 'Waitlist', adminTabActivity: 'Activity Log', adminTabChatInsights: 'Chat Insights'
+  };
   function switchAdminTab(activeTabId) {
     adminTabs.forEach(t => document.getElementById(t).classList.toggle('active', t === activeTabId));
     Object.values(adminViews).forEach(v => document.getElementById(v).style.display = 'none');
     document.getElementById(adminViews[activeTabId]).style.display = 'block';
+    const label = adminTabLabels[activeTabId] || 'Orders';
+    document.getElementById('adminBreadcrumb').innerHTML = `Admin Panel <span style="opacity:0.5;">›</span> ${label}`;
+    document.getElementById('adminPanelTitle').textContent = `Admin — ${label}`;
   }
   document.getElementById('adminTabOrders')?.addEventListener('click', () => switchAdminTab('adminTabOrders'));
   document.getElementById('adminTabCustomers')?.addEventListener('click', () => { switchAdminTab('adminTabCustomers'); loadAdminCustomers(); });
@@ -3672,7 +3737,7 @@
         if (b.advanceChoice === 'now') {
           advanceBadge = b.advanceConfirmed
             ? '<span class="order-badge ready">Advance Confirmed</span>'
-            : '<span class="order-badge progress" style="color:var(--gold);">Advance Proof Pending Review</span>';
+            : '<span class="order-badge progress" style="color:var(--gold-text);">Advance Proof Pending Review</span>';
           if (b.advanceProofOcrPassed === true) advanceBadge += ' <span class="order-badge ready" style="margin-left:4px;">✓ Account # Found</span>';
           else if (b.advanceProofOcrPassed === false) advanceBadge += ' <span class="order-badge progress" style="margin-left:4px;color:var(--pink);">⚠️ Account # Not Found</span>';
         } else if (b.advanceChoice === 'later') {
@@ -4235,10 +4300,11 @@
   async function loadTeam() {
     const grid = document.getElementById('teamGrid');
     if (!firebaseReady) return;
+    grid.innerHTML = skeletonGridHtml(4);
     try {
       const snap = await getDocs(query(teamCol, orderBy('createdAt', 'asc')));
       if (snap.empty) {
-        grid.innerHTML = '<p style="color:var(--muted);font-size:14px;">Team info coming soon!</p>';
+        grid.innerHTML = emptyStateHtml('👥', 'Team info coming soon!');
         return;
       }
       const members = [];
@@ -4403,6 +4469,7 @@
   async function loadShopProducts() {
     const grid = document.getElementById('shopGrid');
     if (!firebaseReady) return;
+    grid.innerHTML = skeletonGridHtml(6);
     try {
       const rate = await getUsdtRate();
       const rateBadge = document.getElementById('todayRateBadge');
@@ -4413,7 +4480,7 @@
       // Oldest-first so sections appear in the order the admin first created them
       const snap = await getDocs(query(productsCol, orderBy('createdAt', 'asc')));
       if (snap.empty) {
-        grid.innerHTML = '<p style="color:var(--muted);font-size:14px;">Packages coming soon — check back shortly.</p>';
+        grid.innerHTML = emptyStateHtml('📦', 'Packages coming soon — check back shortly.');
         return;
       }
       const sectionOrder = [];
@@ -4515,10 +4582,11 @@
   async function loadPortfolio() {
     const grid = document.getElementById('portfolioGrid');
     if (!firebaseReady) return;
+    grid.innerHTML = skeletonGridHtml(6);
     try {
       const snap = await getDocs(query(portfolioCol, orderBy('createdAt', 'desc')));
       if (snap.empty) {
-        grid.innerHTML = '<p style="color:var(--muted);font-size:14px;grid-column:1/-1;">Portfolio coming soon — check back shortly.</p>';
+        grid.innerHTML = emptyStateHtml('🎬', 'Portfolio coming soon — check back shortly.');
         return;
       }
       grid.innerHTML = '';
@@ -4625,6 +4693,7 @@
     const countEl = document.getElementById('cartCount');
     countEl.textContent = count;
     countEl.style.display = count > 0 ? 'flex' : 'none';
+    updateStickyCartBar();
 
     const list = document.getElementById('cartItemsList');
     const totalRow = document.getElementById('cartTotalRow');
@@ -4664,11 +4733,11 @@
       const targetItem = cart.find(i => i.id === selectedDiscountItemId);
       const targetLineTotal = targetItem.price * targetItem.qty;
       const discounted = total - (targetLineTotal * pct / 100);
-      document.getElementById('cartTotalAmount').innerHTML = `<span style="text-decoration:line-through;color:var(--muted);font-weight:400;font-size:12px;">Rs. ${total.toLocaleString()}</span> Rs. ${Math.round(discounted).toLocaleString()} <span style="color:var(--gold);font-size:11px;">(${pct}% off ${escapeHtml(targetItem.name)})</span>`;
+      document.getElementById('cartTotalAmount').innerHTML = `<span style="text-decoration:line-through;color:var(--muted);font-weight:400;font-size:12px;">Rs. ${total.toLocaleString()}</span> Rs. ${Math.round(discounted).toLocaleString()} <span style="color:var(--gold-text);font-size:11px;">(${pct}% off ${escapeHtml(targetItem.name)})</span>`;
       const picker = document.getElementById('discountItemPicker');
       picker.style.display = 'block';
       picker.innerHTML = `
-        <label style="font-size:12px;color:var(--gold);display:block;margin-bottom:6px;">🎉 Apply your ${pct}% wallet discount to:</label>
+        <label style="font-size:12px;color:var(--gold-text);display:block;margin-bottom:6px;">🎉 Apply your ${pct}% wallet discount to:</label>
         <select id="discountItemSelect" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'Inter';font-size:13px;">
           ${cart.map(i => `<option value="${i.id}" ${i.id === selectedDiscountItemId ? 'selected' : ''}>${escapeHtml(i.name)}</option>`).join('')}
         </select>`;
@@ -5260,6 +5329,26 @@
   document.getElementById('cartClose')?.addEventListener('click', () => { document.getElementById('cartModal').style.display = 'none'; });
   document.getElementById('cartModal')?.addEventListener('click', (e) => { if (e.target.id === 'cartModal') e.target.style.display = 'none'; });
 
+  function updateStickyCartBar() {
+    const bar = document.getElementById('stickyCartBar');
+    if (!bar) return;
+    const count = cart.reduce((sum, i) => sum + i.qty, 0);
+    if (!count) { bar.classList.remove('show'); return; }
+    const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+    document.getElementById('stickyCartBarText').textContent = `${count} item${count > 1 ? 's' : ''} in cart`;
+    document.getElementById('stickyCartBarTotal').textContent = `Rs. ${total.toLocaleString()} →`;
+    // Only show once the shopper has scrolled to/past the packages section — avoids covering the hero on mobile
+    const shopSection = document.getElementById('shop');
+    if (shopSection && shopSection.getBoundingClientRect().top < window.innerHeight) {
+      bar.classList.add('show');
+    }
+  }
+  document.getElementById('stickyCartBar')?.addEventListener('click', () => {
+    renderCart();
+    document.getElementById('cartModal').style.display = 'flex';
+  });
+  window.addEventListener('scroll', () => { if (cart.length) updateStickyCartBar(); }, { passive: true });
+
   function getOrGenerateDiscount(subtotal) {
     if (referralDiscountPercent === null) {
       const threshold = 15000;
@@ -5338,7 +5427,7 @@
   function paymentProofWarningHtml(ocrResult) {
     if (!ocrResult || !ocrResult.checked) return '';
     if (ocrResult.foundAccount) return `<p style="font-size:12px;color:#4cd964;margin-top:6px;">✓ Our payment details were found in this image.</p>`;
-    return `<p style="font-size:12px;color:var(--gold);margin-top:6px;">⚠️ We couldn't automatically find our account number in this image — please double-check you uploaded the right screenshot. This won't stop your checkout; our team will review it manually too.</p>`;
+    return `<p style="font-size:12px;color:var(--gold-text);margin-top:6px;">⚠️ We couldn't automatically find our account number in this image — please double-check you uploaded the right screenshot. This won't stop your checkout; our team will review it manually too.</p>`;
   }
 
   function isGoogleMapsLink(url) {
@@ -5651,7 +5740,7 @@
           <div class="ref-stat-row" style="grid-template-columns:1fr;">
             <div><div class="val">${d.walletPercent || 0}%</div><div class="lbl">Discount Available</div></div>
           </div>
-          <p style="color:var(--gold);font-size:13.5px;margin-top:10px;">${escapeHtml(d.walletNote || "You've got a discount waiting! Add a package to your cart to use it.")}</p>`;
+          <p style="color:var(--gold-text);font-size:13.5px;margin-top:10px;">${escapeHtml(d.walletNote || "You've got a discount waiting! Add a package to your cart to use it.")}</p>`;
       } else {
         content.innerHTML = `<p style="color:var(--muted);font-size:14px;">Your wallet is empty right now. Keep referring friends for a chance to win!</p>`;
       }
@@ -5961,6 +6050,23 @@
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // Reusable skeleton placeholder grid — shown while a section's data is loading.
+  function skeletonGridHtml(count) {
+    return `<div class="skeleton-grid">${Array.from({ length: count }).map(() => `
+      <div class="skeleton-card">
+        <div class="skeleton-shape skel-img"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-shape skel-line"></div>
+          <div class="skeleton-shape skel-line short"></div>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  // Reusable empty-state block — icon + message, used instead of a bare line of muted text.
+  function emptyStateHtml(icon, message) {
+    return `<div class="empty-state"><div class="empty-state-icon">${icon}</div><p>${message}</p></div>`;
   }
 
   function compressImageFile(file, maxW = 800, quality = 0.7) {
