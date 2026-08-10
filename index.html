@@ -320,7 +320,7 @@
   header.scrolled .brand-mark span{font-size:13px;}
   nav{
     display:flex;align-items:center;justify-content:space-between;
-    padding:12px 24px;max-width:1400px;margin:0 auto;
+    padding:12px 40px;max-width:1680px;margin:0 auto;
     transition:padding .3s ease;
   }
   .brand-mark{display:flex;align-items:center;gap:10px;flex-shrink:0;}
@@ -4323,8 +4323,15 @@
   function paintCropperTransform() {
     const img = document.getElementById('cropperImage');
     const scale = cropperBaseScale * cropperZoomVal;
-    img.style.width = (cropperNaturalW * scale) + 'px';
-    img.style.height = (cropperNaturalH * scale) + 'px';
+    const dispW = cropperNaturalW * scale, dispH = cropperNaturalH * scale;
+    // Clamp panning so the image can never be dragged past its edge, leaving blank
+    // background exposed in the crop circle (this was the cause of broken/empty crops).
+    const maxPanX = Math.max(0, (dispW - CROPPER_VIEWPORT) / 2);
+    const maxPanY = Math.max(0, (dispH - CROPPER_VIEWPORT) / 2);
+    cropperPanX = Math.min(maxPanX, Math.max(-maxPanX, cropperPanX));
+    cropperPanY = Math.min(maxPanY, Math.max(-maxPanY, cropperPanY));
+    img.style.width = dispW + 'px';
+    img.style.height = dispH + 'px';
     img.style.transform = `translate(-50%, -50%) translate(${cropperPanX}px, ${cropperPanY}px)`;
   }
 
