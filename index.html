@@ -2532,6 +2532,27 @@
   document.getElementById('otpClose')?.addEventListener('click', () => { document.getElementById('otpModal').style.display = 'none'; });
   document.getElementById('otpModal')?.addEventListener('click', (e) => { if (e.target.id === 'otpModal') e.target.style.display = 'none'; });
 
+  // Pressing Enter in any of these input fields clicks their associated button —
+  // matches natural form behavior even though these aren't wrapped in <form> tags.
+  function wireEnterToClick(inputIds, buttonId) {
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+    inputIds.forEach(id => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
+      });
+    });
+  }
+  wireEnterToClick(['otpCodeInput'], 'otpVerifyBtn');
+  wireEnterToClick(['walletSearchEmail'], 'walletSearchBtn');
+  wireEnterToClick(['walletPercent', 'walletNote'], 'walletSaveBtn');
+  wireEnterToClick(['suName', 'suEmail', 'suPassword', 'suWhatsapp'], 'sendSignupCodeBtn');
+  wireEnterToClick(['signupOtpInput'], 'completeSignupBtn');
+  wireEnterToClick(['newAccountPassword'], 'setPasswordBtn');
+  wireEnterToClick(['adminCodeInput'], 'adminCodeSubmit');
+
   document.getElementById('otpVerifyBtn')?.addEventListener('click', async () => {
     const msg = document.getElementById('otpMsg');
     const entered = document.getElementById('otpCodeInput').value.trim();
