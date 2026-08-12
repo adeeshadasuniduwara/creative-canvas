@@ -176,118 +176,17 @@
   .role-select-card svg{stroke:var(--accent) !important;}
   .role-select-card:hover{border-color:var(--accent) !important;box-shadow:0 16px 40px -12px var(--accent-dim) !important;}
 
-  /* ---- App shell: sidebar + content, full screen — this IS the software ---- */
-  #adminModal{
-    position:fixed !important;inset:0 !important;z-index:500 !important;padding:0 !important;
-    background:var(--bg) !important;backdrop-filter:none !important;
-    align-items:stretch !important;justify-content:stretch !important;
-  }
+
+  /* ---- Full-screen admin panel (identical structure to the website's admin panel) ---- */
+  #adminModal{padding:0;align-items:stretch;justify-content:stretch;}
   #adminModalCard{
-    display:grid !important;grid-template-columns:264px 1fr !important;
-    width:100vw !important;height:100vh !important;max-width:none !important;max-height:none !important;
-    border-radius:0 !important;padding:0 !important;overflow:hidden !important;
-    background:var(--bg) !important;border:none !important;
+    max-width:none;width:100vw;height:100vh;max-height:100vh;border-radius:0;
+    padding:28px clamp(16px, 4vw, 48px);margin:0;overflow-y:auto;
+  }
+  @media(max-width:480px){
+    #adminModalCard{padding:20px 16px;}
   }
   #adminModalClose{display:none !important;}
-
-  /* ---- Sidebar ---- */
-  #adminModalCard > .admin-tabs{
-    grid-column:1 !important;grid-row:1/-1 !important;
-    display:flex !important;flex-direction:column !important;flex-wrap:nowrap !important;
-    align-items:stretch !important;justify-content:flex-start !important;gap:2px !important;
-    height:100% !important;padding:0 !important;overflow-y:auto !important;
-    background:var(--bg-alt) !important;border-right:1px solid var(--line) !important;border-radius:0 !important;
-  }
-  #sidebarBrand{
-    display:flex;align-items:center;gap:10px;padding:20px 20px 18px;margin-bottom:6px;
-    border-bottom:1px solid var(--line);
-  }
-  #sidebarBrand img{width:32px;height:32px;border-radius:9px;object-fit:cover;}
-  #sidebarBrand .brand-text b{display:block;font-family:'Poppins';font-size:13.5px;font-weight:700;color:var(--text);line-height:1.3;}
-  #sidebarBrand .brand-text span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
-  .sidebar-section-label{
-    font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
-    padding:16px 20px 8px;opacity:.7;
-  }
-  #adminModalCard > .admin-tabs .auth-tab{
-    width:calc(100% - 20px) !important;margin:0 10px !important;text-align:left !important;
-    padding:10px 12px !important;border-radius:8px !important;
-    flex:0 0 auto !important;background:none !important;border:none !important;
-    display:flex !important;align-items:center !important;gap:10px !important;
-    font-size:13px !important;font-weight:500 !important;color:var(--muted) !important;
-    position:relative;transition:background .15s ease, color .15s ease;
-  }
-  #adminModalCard > .admin-tabs .auth-tab::before{
-    content:'';width:17px;height:17px;flex-shrink:0;background-color:currentColor;
-    -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
-    opacity:.85;
-  }
-  #adminModalCard > .admin-tabs .auth-tab:hover{background:rgba(255,255,255,0.04) !important;color:var(--text) !important;}
-  #adminModalCard > .admin-tabs .auth-tab.active{
-    background:var(--accent-dim) !important;color:var(--text) !important;font-weight:600;
-  }
-  #adminModalCard > .admin-tabs .auth-tab.active::after{
-    content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);
-    width:3px;height:18px;border-radius:3px;background:var(--accent);
-  }
-  /* Icon per nav item (inline SVG masks — crisp at any size, follow text color) */
-  #adminTabOrders::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M21 8v13H3V8M1 3h22v5H1zM10 12h4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M21 8v13H3V8M1 3h22v5H1zM10 12h4'/%3E%3C/svg%3E");}
-  #adminTabCustomers::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");}
-  #adminTabProducts::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M20.59 13.41 11 3.83V3H3v8h.83l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83z'/%3E%3Ccircle cx='6.5' cy='6.5' r='1.5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M20.59 13.41 11 3.83V3H3v8h.83l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83z'/%3E%3Ccircle cx='6.5' cy='6.5' r='1.5'/%3E%3C/svg%3E");}
-  #adminTabPortfolio::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E");}
-  #adminTabTeam::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");}
-  #adminTabAdmins::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z'/%3E%3C/svg%3E");}
-  #adminTabReferrals::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='8' width='18' height='4'/%3E%3Cpath d='M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='8' width='18' height='4'/%3E%3Cpath d='M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5'/%3E%3C/svg%3E");}
-  #adminTabWallets::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M21 12V7H5a2 2 0 0 1 0-4h14v4'/%3E%3Cpath d='M3 5v14a2 2 0 0 0 2 2h16v-5'/%3E%3Cpath d='M18 12a2 2 0 0 0 0 4h4v-4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M21 12V7H5a2 2 0 0 1 0-4h14v4'/%3E%3Cpath d='M3 5v14a2 2 0 0 0 2 2h16v-5'/%3E%3Cpath d='M18 12a2 2 0 0 0 0 4h4v-4z'/%3E%3C/svg%3E");}
-  #adminTabBookings::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4'/%3E%3C/svg%3E");}
-  #adminTabWaitlist::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 6v6l4 2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 6v6l4 2'/%3E%3C/svg%3E");}
-  #adminTabActivity::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E");}
-  #adminSignOutQuick::before{
-    content:'';width:17px;height:17px;flex-shrink:0;background-color:currentColor;display:inline-block;vertical-align:-3px;margin-right:10px;
-    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E");
-    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E");
-  }
-  #adminSignOutQuick{
-    margin:auto 10px 16px !important;padding:10px 12px !important;border-radius:8px !important;
-    color:#f87171 !important;font-size:13px !important;font-weight:500 !important;cursor:pointer;
-    border:none !important;border-top:1px solid var(--line) !important;padding-top:16px !important;
-    text-align:left;background:none;font-family:'Inter';display:flex;align-items:center;
-  }
-  #adminSignOutQuick:hover{color:#fca5a5 !important;}
-
-  /* ---- Content column ---- */
-  #adminModalCard > .admin-tabs ~ *{grid-column:2 !important;padding:0 36px !important;}
-  #adminModalCard > .admin-tabs ~ *:first-of-type{
-    padding-top:26px !important;padding-bottom:20px !important;
-    display:flex !important;align-items:center !important;justify-content:space-between !important;
-    border-bottom:1px solid var(--line) !important;margin-bottom:24px !important;
-  }
-  #adminModalCard > .admin-tabs ~ *:first-of-type h3{font-family:'Poppins';font-size:20px !important;font-weight:700 !important;}
-  #adminModalCard > div[id$="View"]{overflow-y:auto !important;padding-bottom:40px !important;}
-  #adminModalCard{overflow:hidden !important;}
-  #adminOrdersView, #adminCustomersView, #adminProductsView, #adminPortfolioView, #adminTeamView,
-  #adminAdminsView, #adminReferralsView, #adminWalletsView, #adminBookingsView, #adminWaitlistView, #adminActivityView{
-    max-height:calc(100vh - 210px) !important;
-  }
-  /* Tab pill row is now redundant (sidebar handles navigation) — hide the second, in-column instance if any */
-
-  /* ---- Buttons: restrained single-accent system instead of the marketing rainbow ---- */
-  .btn-primary, button[type="submit"].btn-primary{
-    background:var(--accent) !important;color:#fff !important;box-shadow:none !important;
-  }
-  .btn-primary:hover{background:#4a7bdb !important;}
-  .btn-outline{border-color:var(--line) !important;color:var(--text) !important;}
-  .btn-outline:hover{border-color:var(--accent) !important;background:var(--accent-dim) !important;}
-  .mini-btn:hover{border-color:var(--accent) !important;background:var(--accent-dim) !important;}
-  .row-menu-dropdown .mini-btn:hover{background:var(--accent-dim) !important;}
-
-  /* ---- Stat tiles + insights card: crisp, minimal ---- */
-  #adminStatsBar .val{font-family:'Poppins';font-weight:700;}
-  #adminStatsBar, #adminInsightsBox, .admin-order-row{
-    border-color:var(--line) !important;
-  }
-
-
 
   #authGate{
     position:fixed;inset:0;z-index:290;background:var(--bg);
@@ -1341,7 +1240,10 @@
   <div class="modal-card" id="adminModalCard">
     <button class="modal-close" id="adminModalClose" aria-label="Close">&times;</button>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
-      <h3 style="font-size:19px;font-weight:700;margin:0;">Admin — Orders</h3>
+      <div>
+        <p id="adminBreadcrumb" style="font-size:12px;color:var(--muted);margin:0 0 4px;">Admin Panel <span style="opacity:0.5;">›</span> Orders</p>
+        <h3 style="font-size:19px;font-weight:700;margin:0;" id="adminPanelTitle">Admin — Orders</h3>
+      </div>
       <button type="button" id="exportBackupBtn" class="mini-btn" style="display:none;">⬇️ Backup All Data</button>
     </div>
     <div id="adminStatsBar" class="ref-stat-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
@@ -1350,9 +1252,24 @@
       <div><div class="val" id="statPending">–</div><div class="lbl">Pending Payments (Rs.)</div></div>
     </div>
     <div id="adminInsightsBox" style="display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <h4 style="font-size:14px;margin:0;">Income — Last 6 Months</h4>
-        <button type="button" id="toggleInsightsBtn" class="mini-btn">Hide</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <h4 style="font-size:14px;margin:0;" id="incomeChartTitle">Income — Last 6 Months</h4>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <select id="incomePeriodSelect" style="background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--text);font-family:'Inter';font-size:12px;">
+            <option value="3">Last 3 Months</option>
+            <option value="6" selected>Last 6 Months</option>
+            <option value="12">Last 12 Months</option>
+            <option value="24">Last 24 Months</option>
+            <option value="custom">Custom Range…</option>
+          </select>
+          <span id="incomeCustomRangeWrap" style="display:none;align-items:center;gap:6px;">
+            <input type="month" id="incomeRangeFrom" style="background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:6px 8px;color:var(--text);font-family:'Inter';font-size:12px;">
+            <span style="color:var(--muted);font-size:12px;">to</span>
+            <input type="month" id="incomeRangeTo" style="background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:6px 8px;color:var(--text);font-family:'Inter';font-size:12px;">
+            <button type="button" id="incomeRangeApplyBtn" class="mini-btn">Apply</button>
+          </span>
+          <button type="button" id="toggleInsightsBtn" class="mini-btn">Hide</button>
+        </div>
       </div>
       <div id="insightsBody">
         <canvas id="incomeChart" height="90"></canvas>
@@ -1361,29 +1278,19 @@
       </div>
     </div>
     <div class="auth-tabs admin-tabs" style="margin-bottom:22px;">
-      <div id="sidebarBrand">
-        <img src="assets/logo.jpg" alt="">
-        <div class="brand-text"><b>Creative Canvas</b><span>Admin Console</span></div>
-      </div>
-      <span class="sidebar-section-label">Overview</span>
       <button class="auth-tab active" id="adminTabOrders" type="button">Orders</button>
-      <span class="sidebar-section-label">Operations</span>
-      <button class="auth-tab" id="adminTabBookings" type="button">Booking Requests</button>
-      <button class="auth-tab" id="adminTabWaitlist" type="button">Waitlist</button>
-      <span class="sidebar-section-label">Content</span>
+      <button class="auth-tab" id="adminTabCustomers" type="button">Customers</button>
       <button class="auth-tab" id="adminTabProducts" type="button" style="display:none;">Packages</button>
       <button class="auth-tab" id="adminTabPortfolio" type="button" style="display:none;">Portfolio</button>
       <button class="auth-tab" id="adminTabTeam" type="button" style="display:none;">Team</button>
-      <span class="sidebar-section-label">People</span>
-      <button class="auth-tab" id="adminTabCustomers" type="button">Customers</button>
       <button class="auth-tab" id="adminTabAdmins" type="button" style="display:none;">Admins</button>
-      <button class="auth-tab" id="adminTabPermissions" type="button" style="display:none;">Admin Access</button>
       <button class="auth-tab" id="adminTabReferrals" type="button" style="display:none;">Referrals</button>
       <button class="auth-tab" id="adminTabWallets" type="button" style="display:none;">Wallets</button>
-      <span class="sidebar-section-label">System</span>
+      <button class="auth-tab" id="adminTabBookings" type="button">Booking Requests</button>
+      <button class="auth-tab" id="adminTabWaitlist" type="button">Waitlist</button>
       <button class="auth-tab" id="adminTabActivity" type="button" style="display:none;">Activity Log</button>
       <button class="auth-tab" id="adminTabChatInsights" type="button" style="display:none;">Chat Insights</button>
-      <button type="button" id="adminSignOutQuick">Sign Out</button>
+      <button class="auth-tab" id="adminTabPermissions" type="button" style="display:none;">Admin Access</button>
     </div>
     <div id="adminOrdersView">
     <form id="adminOrderForm" class="admin-form">
@@ -1402,6 +1309,13 @@
       <button type="button" id="toggleArchivedBtn" class="mini-btn" data-showing="active">📦 Archived Orders</button>
     </div>
     <input type="text" id="orderSearchInput" placeholder="Search by customer email or order title…" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;margin-bottom:14px;">
+    <div id="orderBulkBar" style="display:none;background:var(--card);border:1px solid var(--pink);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <span id="orderBulkCount" style="font-size:12.5px;font-weight:600;"></span>
+      <div style="display:flex;gap:8px;">
+        <button type="button" id="bulkMarkReadyBtn" class="mini-btn">Mark Ready</button>
+        <button type="button" id="bulkArchiveBtn" class="mini-btn danger">Archive Selected</button>
+      </div>
+    </div>
     <div id="adminOrdersList" class="admin-list-grid"></div>
     </div>
     <div id="adminCustomersView" style="display:none;">
@@ -1417,6 +1331,17 @@
       </form>
       <div id="adminAdminsList" class="admin-list-grid"></div>
       <button type="button" id="changeAdminCodeBtn" class="mini-btn" style="margin-top:20px;">🔐 Change Admin Access Code</button>
+    </div>
+    <div id="adminPermissionsView" style="display:none;">
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Choose which admin panel sections each admin can access. Select an admin below, then tick the sections they should see.</p>
+      <select id="permAdminSelect" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;margin-bottom:16px;">
+        <option value="">Select an admin…</option>
+      </select>
+      <div id="permCheckboxList" style="display:none;">
+        <div id="permCheckboxGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px;"></div>
+        <button type="button" id="savePermissionsBtn" class="btn btn-primary">Save Access</button>
+        <p id="permMsg" style="font-size:13px;min-height:16px;margin-top:10px;"></p>
+      </div>
     </div>
     <div id="adminProductsView" style="display:none;">
       <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Add packages/services with pricing — customers can add them to their cart from the Packages section.</p>
@@ -1443,13 +1368,22 @@
       </form>
       <p style="color:var(--muted);font-size:12.5px;margin:-10px 0 20px;">Sections are just plain text — type any name (with an emoji if you like) and packages with the same section text automatically group together on the site.</p>
       <h4 style="font-size:14px;color:var(--muted);margin-bottom:12px;">All Packages</h4>
-      <div id="adminProductsList" class="admin-list-grid"></div>
+      <div id="adminProductsList" class="admin-list-grid" style="grid-template-columns:1fr;"></div>
     </div>
     <div id="adminPortfolioView" style="display:none;">
       <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Add finished work to the public Portfolio gallery. Leave "Video URL" blank for a photo tile, or add a YouTube/Vimeo link for a video tile (thumbnail image still required).</p>
       <form id="adminPortfolioForm" class="admin-form">
         <input type="text" id="portImage" placeholder="Image / thumbnail URL" required class="full">
         <input type="text" id="portCaption" placeholder="Caption (e.g. Wedding Highlights)" class="full">
+        <select id="portCategory" class="full" style="background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;">
+          <option value="">Category (optional)</option>
+          <option value="Wedding">💍 Wedding</option>
+          <option value="Birthday">🎂 Birthday & Family</option>
+          <option value="Portrait">📸 Portrait</option>
+          <option value="Commercial">🏢 Commercial</option>
+          <option value="Drone">🚁 Drone</option>
+          <option value="Editing">🎬 Editing</option>
+        </select>
         <input type="url" id="portVideo" placeholder="Video URL (YouTube/Vimeo) — optional" class="full">
         <button type="submit" class="btn btn-primary full">Add to Portfolio</button>
         <p id="adminPortfolioMsg" class="full" style="font-size:13px;min-height:16px;"></p>
@@ -1531,17 +1465,6 @@
       <div id="chatTopTopics" style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;"></div>
       <h4 style="font-size:14px;margin-bottom:10px;">❓ Recent "Couldn't Answer" Questions</h4>
       <div id="chatUnansweredList" class="admin-list-grid"></div>
-    </div>
-    <div id="adminPermissionsView" style="display:none;">
-      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Choose which admin panel sections each admin can access. Select an admin below, then tick the sections they should see.</p>
-      <select id="permAdminSelect" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;margin-bottom:16px;">
-        <option value="">Select an admin…</option>
-      </select>
-      <div id="permCheckboxList" style="display:none;">
-        <div id="permCheckboxGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px;"></div>
-        <button type="button" id="savePermissionsBtn" class="btn btn-primary">Save Access</button>
-        <p id="permMsg" style="font-size:13px;min-height:16px;margin-top:10px;"></p>
-      </div>
     </div>
   </div>
 </div>
