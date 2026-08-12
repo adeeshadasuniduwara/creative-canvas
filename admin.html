@@ -149,65 +149,145 @@
   .theme-toggle-btn svg{width:17px;height:17px;}
   *{margin:0;padding:0;box-sizing:border-box;}
 
-  /* ===== ADMIN-ONLY APP MODE ===== */
+  /* ============================================================
+     ADMIN CONSOLE — PROFESSIONAL APP DESIGN SYSTEM
+     A dedicated, restrained palette for internal software use —
+     distinct from the customer-facing site's marketing gradient look.
+     ============================================================ */
+  html[data-theme]{
+    --bg:#0a0b0f !important; --bg-alt:#111219 !important; --card:#15161d !important;
+    --line:#23242e !important; --text:#eef0f4 !important; --muted:#888b98 !important;
+  }
+  html{ --accent:#5b8def; --accent-dim:rgba(91,141,239,0.12); --accent-line:rgba(91,141,239,0.35); }
+
   body > section, body > footer, nav{display:none !important;}
   .cart-fab, .chat-fab, .chat-window{display:none !important;}
   #bgMusicToggle, #speechMuteBtn{display:none !important;}
+  body{font-family:'Inter',sans-serif;}
 
-  /* ===== FULL-SCREEN APP SHELL (sidebar + content) — this is the entire "software", not a popup ===== */
+  /* ---- Auth gate / role select, restyled to match the console's tone ---- */
+  .auth-gate-bg{
+    background:radial-gradient(circle at 20% 20%, rgba(91,141,239,0.10), transparent 45%),
+               radial-gradient(circle at 80% 80%, rgba(91,141,239,0.06), transparent 50%) !important;
+  }
+  .auth-gate-content h1{
+    background:none !important;-webkit-text-fill-color:var(--text) !important;color:var(--text) !important;
+  }
+  .role-select-card svg{stroke:var(--accent) !important;}
+  .role-select-card:hover{border-color:var(--accent) !important;box-shadow:0 16px 40px -12px var(--accent-dim) !important;}
+
+  /* ---- App shell: sidebar + content, full screen — this IS the software ---- */
   #adminModal{
     position:fixed !important;inset:0 !important;z-index:500 !important;padding:0 !important;
     background:var(--bg) !important;backdrop-filter:none !important;
     align-items:stretch !important;justify-content:stretch !important;
   }
   #adminModalCard{
-    display:grid !important;grid-template-columns:250px 1fr !important;
+    display:grid !important;grid-template-columns:264px 1fr !important;
     width:100vw !important;height:100vh !important;max-width:none !important;max-height:none !important;
     border-radius:0 !important;padding:0 !important;overflow:hidden !important;
     background:var(--bg) !important;border:none !important;
   }
   #adminModalClose{display:none !important;}
+
+  /* ---- Sidebar ---- */
   #adminModalCard > .admin-tabs{
     grid-column:1 !important;grid-row:1/-1 !important;
     display:flex !important;flex-direction:column !important;flex-wrap:nowrap !important;
-    align-items:stretch !important;justify-content:flex-start !important;gap:4px !important;
-    height:100% !important;padding:22px 14px !important;overflow-y:auto !important;
-    background:var(--card) !important;border-right:1px solid var(--line) !important;border-radius:0 !important;
+    align-items:stretch !important;justify-content:flex-start !important;gap:2px !important;
+    height:100% !important;padding:0 !important;overflow-y:auto !important;
+    background:var(--bg-alt) !important;border-right:1px solid var(--line) !important;border-radius:0 !important;
   }
-  #adminModalCard > .admin-tabs::before{
-    content:'Creative Canvas';display:block;font-family:'Poppins';font-weight:800;font-size:14px;
-    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-    padding:6px 12px 18px;
+  #sidebarBrand{
+    display:flex;align-items:center;gap:10px;padding:20px 20px 18px;margin-bottom:6px;
+    border-bottom:1px solid var(--line);
+  }
+  #sidebarBrand img{width:32px;height:32px;border-radius:9px;object-fit:cover;}
+  #sidebarBrand .brand-text b{display:block;font-family:'Poppins';font-size:13.5px;font-weight:700;color:var(--text);line-height:1.3;}
+  #sidebarBrand .brand-text span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+  .sidebar-section-label{
+    font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+    padding:16px 20px 8px;opacity:.7;
   }
   #adminModalCard > .admin-tabs .auth-tab{
-    width:100% !important;text-align:left !important;padding:12px 16px !important;border-radius:10px !important;
-    flex:0 0 auto !important;background:none !important;border:1px solid transparent !important;
+    width:calc(100% - 20px) !important;margin:0 10px !important;text-align:left !important;
+    padding:10px 12px !important;border-radius:8px !important;
+    flex:0 0 auto !important;background:none !important;border:none !important;
+    display:flex !important;align-items:center !important;gap:10px !important;
+    font-size:13px !important;font-weight:500 !important;color:var(--muted) !important;
+    position:relative;transition:background .15s ease, color .15s ease;
   }
-  #adminModalCard > .admin-tabs .auth-tab:hover{background:var(--bg-alt) !important;}
-  #adminModalCard > .admin-tabs .auth-tab.active{background:var(--grad) !important;color:#0a0a0d !important;font-weight:700;border-color:transparent !important;}
-  #adminModalCard > .admin-tabs ~ *{grid-column:2 !important;padding:0 32px !important;}
-  #adminModalCard > .admin-tabs ~ *:first-of-type{padding-top:28px !important;}
-  #adminModalCard > div[id$="View"]{overflow-y:auto !important;padding-bottom:40px !important;}
-  #adminModalCard{overflow:hidden !important;}
-  /* Each view fills the scrollable content column on its own */
-  #adminOrdersView, #adminCustomersView, #adminProductsView, #adminPortfolioView, #adminTeamView,
-  #adminAdminsView, #adminReferralsView, #adminWalletsView, #adminBookingsView, #adminWaitlistView, #adminActivityView{
-    max-height:calc(100vh - 220px) !important;
+  #adminModalCard > .admin-tabs .auth-tab::before{
+    content:'';width:17px;height:17px;flex-shrink:0;background-color:currentColor;
+    -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
+    opacity:.85;
+  }
+  #adminModalCard > .admin-tabs .auth-tab:hover{background:rgba(255,255,255,0.04) !important;color:var(--text) !important;}
+  #adminModalCard > .admin-tabs .auth-tab.active{
+    background:var(--accent-dim) !important;color:var(--text) !important;font-weight:600;
+  }
+  #adminModalCard > .admin-tabs .auth-tab.active::after{
+    content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);
+    width:3px;height:18px;border-radius:3px;background:var(--accent);
+  }
+  /* Icon per nav item (inline SVG masks — crisp at any size, follow text color) */
+  #adminTabOrders::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M21 8v13H3V8M1 3h22v5H1zM10 12h4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M21 8v13H3V8M1 3h22v5H1zM10 12h4'/%3E%3C/svg%3E");}
+  #adminTabCustomers::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");}
+  #adminTabProducts::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M20.59 13.41 11 3.83V3H3v8h.83l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83z'/%3E%3Ccircle cx='6.5' cy='6.5' r='1.5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M20.59 13.41 11 3.83V3H3v8h.83l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83z'/%3E%3Ccircle cx='6.5' cy='6.5' r='1.5'/%3E%3C/svg%3E");}
+  #adminTabPortfolio::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E");}
+  #adminTabTeam::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");}
+  #adminTabAdmins::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z'/%3E%3C/svg%3E");}
+  #adminTabReferrals::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='8' width='18' height='4'/%3E%3Cpath d='M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='8' width='18' height='4'/%3E%3Cpath d='M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5'/%3E%3C/svg%3E");}
+  #adminTabWallets::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M21 12V7H5a2 2 0 0 1 0-4h14v4'/%3E%3Cpath d='M3 5v14a2 2 0 0 0 2 2h16v-5'/%3E%3Cpath d='M18 12a2 2 0 0 0 0 4h4v-4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M21 12V7H5a2 2 0 0 1 0-4h14v4'/%3E%3Cpath d='M3 5v14a2 2 0 0 0 2 2h16v-5'/%3E%3Cpath d='M18 12a2 2 0 0 0 0 4h4v-4z'/%3E%3C/svg%3E");}
+  #adminTabBookings::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4'/%3E%3C/svg%3E");}
+  #adminTabWaitlist::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 6v6l4 2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 6v6l4 2'/%3E%3C/svg%3E");}
+  #adminTabActivity::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E");}
+  #adminSignOutQuick::before{
+    content:'';width:17px;height:17px;flex-shrink:0;background-color:currentColor;display:inline-block;vertical-align:-3px;margin-right:10px;
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E");
   }
   #adminSignOutQuick{
-    margin-top:auto !important;padding:12px 16px !important;border-radius:10px !important;
-    color:var(--pink) !important;font-size:13px !important;font-weight:600 !important;cursor:pointer;
-    border:1px solid var(--line) !important;text-align:left;background:none;font-family:'Inter';
+    margin:auto 10px 16px !important;padding:10px 12px !important;border-radius:8px !important;
+    color:#f87171 !important;font-size:13px !important;font-weight:500 !important;cursor:pointer;
+    border:none !important;border-top:1px solid var(--line) !important;padding-top:16px !important;
+    text-align:left;background:none;font-family:'Inter';display:flex;align-items:center;
   }
-  @media(max-width:780px){
-    #adminModalCard{grid-template-columns:1fr !important;grid-template-rows:auto 1fr !important;}
-    #adminModalCard > .admin-tabs{
-      grid-row:1 !important;grid-column:1 !important;flex-direction:row !important;height:auto !important;
-      overflow-x:auto !important;border-right:none !important;border-bottom:1px solid var(--line) !important;
-    }
-    #adminModalCard > .admin-tabs::before{display:none;}
-    #adminModalCard > .admin-tabs ~ *{grid-column:1 !important;padding:0 18px !important;}
+  #adminSignOutQuick:hover{color:#fca5a5 !important;}
+
+  /* ---- Content column ---- */
+  #adminModalCard > .admin-tabs ~ *{grid-column:2 !important;padding:0 36px !important;}
+  #adminModalCard > .admin-tabs ~ *:first-of-type{
+    padding-top:26px !important;padding-bottom:20px !important;
+    display:flex !important;align-items:center !important;justify-content:space-between !important;
+    border-bottom:1px solid var(--line) !important;margin-bottom:24px !important;
   }
+  #adminModalCard > .admin-tabs ~ *:first-of-type h3{font-family:'Poppins';font-size:20px !important;font-weight:700 !important;}
+  #adminModalCard > div[id$="View"]{overflow-y:auto !important;padding-bottom:40px !important;}
+  #adminModalCard{overflow:hidden !important;}
+  #adminOrdersView, #adminCustomersView, #adminProductsView, #adminPortfolioView, #adminTeamView,
+  #adminAdminsView, #adminReferralsView, #adminWalletsView, #adminBookingsView, #adminWaitlistView, #adminActivityView{
+    max-height:calc(100vh - 210px) !important;
+  }
+  /* Tab pill row is now redundant (sidebar handles navigation) — hide the second, in-column instance if any */
+
+  /* ---- Buttons: restrained single-accent system instead of the marketing rainbow ---- */
+  .btn-primary, button[type="submit"].btn-primary{
+    background:var(--accent) !important;color:#fff !important;box-shadow:none !important;
+  }
+  .btn-primary:hover{background:#4a7bdb !important;}
+  .btn-outline{border-color:var(--line) !important;color:var(--text) !important;}
+  .btn-outline:hover{border-color:var(--accent) !important;background:var(--accent-dim) !important;}
+  .mini-btn:hover{border-color:var(--accent) !important;background:var(--accent-dim) !important;}
+  .row-menu-dropdown .mini-btn:hover{background:var(--accent-dim) !important;}
+
+  /* ---- Stat tiles + insights card: crisp, minimal ---- */
+  #adminStatsBar .val{font-family:'Poppins';font-weight:700;}
+  #adminStatsBar, #adminInsightsBox, .admin-order-row{
+    border-color:var(--line) !important;
+  }
+
+
 
   #authGate{
     position:fixed;inset:0;z-index:290;background:var(--bg);
@@ -231,16 +311,6 @@
   .auth-gate-content h1{font-family:'Poppins';font-size:26px;font-weight:800;margin-bottom:14px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
   .auth-gate-content p{color:var(--muted);font-size:14.5px;line-height:1.7;margin-bottom:30px;}
   .auth-gate-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
-  .role-select-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
-  .role-select-card{
-    display:flex;flex-direction:column;align-items:center;gap:8px;width:150px;padding:26px 18px;
-    background:var(--card);border:1px solid var(--line);border-radius:18px;cursor:pointer;
-    color:var(--text);font-family:'Inter';transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
-  }
-  .role-select-card svg{width:34px;height:34px;stroke:var(--pink);margin-bottom:4px;}
-  .role-select-card b{font-size:15px;font-weight:700;}
-  .role-select-card span{font-size:11.5px;color:var(--muted);}
-  .role-select-card:hover{transform:translateY(-4px);border-color:var(--pink);box-shadow:0 16px 40px -12px rgba(255,61,119,0.35);}
   html{overflow-x:hidden;}
   body{overflow-x:hidden;word-break:break-word;}
   html{scroll-behavior:smooth;}
@@ -530,6 +600,12 @@
   .ref-link-box{display:flex;gap:8px;background:var(--bg-alt);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:14px 0;align-items:center;}
   .ref-link-box span{flex:1;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere;}
   .ref-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .perm-checkbox-item{
+    display:flex;align-items:center;gap:8px;background:var(--bg-alt);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;cursor:pointer;font-size:12.5px;font-weight:600;transition:border-color .2s ease;
+  }
+  .perm-checkbox-item:hover{border-color:var(--pink);}
+  .perm-checkbox-item input{accent-color:var(--pink);width:15px;height:15px;flex-shrink:0;}
   .ref-stat-row div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;}
   .ref-stat-row .val{font-size:20px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
   .ref-stat-row .lbl{font-size:11.5px;color:var(--muted);margin-top:2px;}
@@ -1234,6 +1310,12 @@
       <button type="submit" class="btn btn-primary">Save Changes</button>
       <p id="editProfileMsg" style="font-size:13px;min-height:16px;"></p>
     </form>
+    <div id="setPasswordBox" style="display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:18px;">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px;" id="setPasswordLabel">Add a password to your account so you can also sign in with Email + Password (useful for the desktop Admin app).</p>
+      <input type="password" id="newAccountPassword" placeholder="New password (min 6 characters)" minlength="6" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'Inter';font-size:14.5px;margin-bottom:10px;">
+      <button type="button" class="btn btn-outline" id="setPasswordBtn" style="width:100%;justify-content:center;">Set Password</button>
+      <p id="setPasswordMsg" style="font-size:12.5px;min-height:16px;margin-top:8px;"></p>
+    </div>
   </div>
 </div>
 
@@ -1279,18 +1361,29 @@
       </div>
     </div>
     <div class="auth-tabs admin-tabs" style="margin-bottom:22px;">
+      <div id="sidebarBrand">
+        <img src="assets/logo.jpg" alt="">
+        <div class="brand-text"><b>Creative Canvas</b><span>Admin Console</span></div>
+      </div>
+      <span class="sidebar-section-label">Overview</span>
       <button class="auth-tab active" id="adminTabOrders" type="button">Orders</button>
-      <button class="auth-tab" id="adminTabCustomers" type="button">Customers</button>
+      <span class="sidebar-section-label">Operations</span>
+      <button class="auth-tab" id="adminTabBookings" type="button">Booking Requests</button>
+      <button class="auth-tab" id="adminTabWaitlist" type="button">Waitlist</button>
+      <span class="sidebar-section-label">Content</span>
       <button class="auth-tab" id="adminTabProducts" type="button" style="display:none;">Packages</button>
       <button class="auth-tab" id="adminTabPortfolio" type="button" style="display:none;">Portfolio</button>
       <button class="auth-tab" id="adminTabTeam" type="button" style="display:none;">Team</button>
+      <span class="sidebar-section-label">People</span>
+      <button class="auth-tab" id="adminTabCustomers" type="button">Customers</button>
       <button class="auth-tab" id="adminTabAdmins" type="button" style="display:none;">Admins</button>
+      <button class="auth-tab" id="adminTabPermissions" type="button" style="display:none;">Admin Access</button>
       <button class="auth-tab" id="adminTabReferrals" type="button" style="display:none;">Referrals</button>
       <button class="auth-tab" id="adminTabWallets" type="button" style="display:none;">Wallets</button>
-      <button class="auth-tab" id="adminTabBookings" type="button">Booking Requests</button>
-      <button class="auth-tab" id="adminTabWaitlist" type="button">Waitlist</button>
+      <span class="sidebar-section-label">System</span>
       <button class="auth-tab" id="adminTabActivity" type="button" style="display:none;">Activity Log</button>
-      <button type="button" id="adminSignOutQuick">⏻ Sign Out</button>
+      <button class="auth-tab" id="adminTabChatInsights" type="button" style="display:none;">Chat Insights</button>
+      <button type="button" id="adminSignOutQuick">Sign Out</button>
     </div>
     <div id="adminOrdersView">
     <form id="adminOrderForm" class="admin-form">
@@ -1426,6 +1519,29 @@
     <div id="adminActivityView" style="display:none;">
       <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">A record of key actions taken by admins — who did what, and when.</p>
       <div id="adminActivityList" class="admin-list-grid"></div>
+    </div>
+    <div id="adminChatInsightsView" style="display:none;">
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">What people are actually asking the AI Assistant — use this to spot gaps in the FAQ or confusing spots on the site.</p>
+      <div class="ref-stat-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div><div class="val" id="chatStatTotal">–</div><div class="lbl">Questions Asked</div></div>
+        <div><div class="val" id="chatStatMatched">–</div><div class="lbl">Answered</div></div>
+        <div><div class="val" id="chatStatFallback">–</div><div class="lbl">Couldn't Answer</div></div>
+      </div>
+      <h4 style="font-size:14px;margin-bottom:10px;">🔥 Most Common Topics</h4>
+      <div id="chatTopTopics" style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;"></div>
+      <h4 style="font-size:14px;margin-bottom:10px;">❓ Recent "Couldn't Answer" Questions</h4>
+      <div id="chatUnansweredList" class="admin-list-grid"></div>
+    </div>
+    <div id="adminPermissionsView" style="display:none;">
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Choose which admin panel sections each admin can access. Select an admin below, then tick the sections they should see.</p>
+      <select id="permAdminSelect" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;margin-bottom:16px;">
+        <option value="">Select an admin…</option>
+      </select>
+      <div id="permCheckboxList" style="display:none;">
+        <div id="permCheckboxGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px;"></div>
+        <button type="button" id="savePermissionsBtn" class="btn btn-primary">Save Access</button>
+        <p id="permMsg" style="font-size:13px;min-height:16px;margin-top:10px;"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -1755,7 +1871,8 @@
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
     GoogleAuthProvider, signInWithPopup, signOut,
-    onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendPasswordResetEmail
+    onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendPasswordResetEmail,
+    linkWithCredential, updatePassword, EmailAuthProvider
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
@@ -1805,6 +1922,7 @@
   let currentUser = null;
   const refCodeFromUrl = new URLSearchParams(window.location.search).get('ref');
   let currentUserIsAdmin = false;
+  let currentAdminPermissions = null; // null = default access set; array = owner-customized per-tab access
   let currentUserIsOwner = false;
   let pendingReferralDiscount = false;
   let selectedDiscountItemId = null;
@@ -1826,6 +1944,11 @@
   reviewSignInBtn?.addEventListener('click', () => openAuthModal());
   document.getElementById('roleOwnerBtn')?.addEventListener('click', () => openAuthModal());
   document.getElementById('roleAdminBtn')?.addEventListener('click', () => openAuthModal());
+  document.getElementById('gateSignInBtn')?.addEventListener('click', () => openAuthModal());
+  document.getElementById('gateSignUpBtn')?.addEventListener('click', () => {
+    openAuthModal();
+    document.querySelector('.auth-tab[data-tab="signup"]')?.click();
+  });
   authClose?.addEventListener('click', closeAuthModal);
   authModal?.addEventListener('click', (e) => { if (e.target === authModal) closeAuthModal(); });
 
@@ -2054,10 +2177,47 @@
         if (d.photo) { previewWrap.innerHTML = `<img src="${d.photo}" alt="">`; epPhotoData = d.photo; }
       }
     } catch (err) { /* non-critical */ }
+    const setPwBox = document.getElementById('setPasswordBox');
+    if (currentUserIsAdmin) {
+      setPwBox.style.display = 'block';
+      const hasPassword = currentUser.providerData.some(p => p.providerId === 'password');
+      document.getElementById('setPasswordLabel').textContent = hasPassword
+        ? 'Change your password (used for signing in with Email + Password, e.g. in the desktop Admin app).'
+        : 'Add a password to your account so you can also sign in with Email + Password (useful for the desktop Admin app, where Google sign-in isn\'t supported).';
+      document.getElementById('setPasswordBtn').textContent = hasPassword ? 'Change Password' : 'Set Password';
+    } else {
+      setPwBox.style.display = 'none';
+    }
     editProfileModal.style.display = 'flex';
   });
   document.getElementById('editProfileClose')?.addEventListener('click', () => { editProfileModal.style.display = 'none'; });
   editProfileModal?.addEventListener('click', (e) => { if (e.target === editProfileModal) editProfileModal.style.display = 'none'; });
+
+  document.getElementById('setPasswordBtn')?.addEventListener('click', async () => {
+    const msg = document.getElementById('setPasswordMsg');
+    const newPw = document.getElementById('newAccountPassword').value;
+    if (!newPw || newPw.length < 6) { msg.style.color = 'var(--pink)'; msg.textContent = 'Please enter at least 6 characters.'; return; }
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Saving…';
+    try {
+      const hasPassword = currentUser.providerData.some(p => p.providerId === 'password');
+      if (hasPassword) {
+        await updatePassword(currentUser, newPw);
+      } else {
+        const credential = EmailAuthProvider.credential(currentUser.email, newPw);
+        await linkWithCredential(currentUser, credential);
+      }
+      msg.style.color = 'var(--blue)'; msg.textContent = 'Done! You can now sign in with Email + Password too — use ' + currentUser.email + '.';
+      document.getElementById('newAccountPassword').value = '';
+      document.getElementById('setPasswordBtn').textContent = 'Change Password';
+      document.getElementById('setPasswordLabel').textContent = 'Change your password (used for signing in with Email + Password, e.g. in the desktop Admin app).';
+    } catch (err) {
+      if (err.code === 'auth/requires-recent-login') {
+        msg.style.color = 'var(--pink)'; msg.textContent = 'For security, please sign out and sign in again with Google first, then retry this.';
+      } else {
+        msg.style.color = 'var(--pink)'; msg.textContent = 'Could not save: ' + (err.code || err.message);
+      }
+    }
+  });
 
   document.getElementById('epPhoto')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -2399,9 +2559,11 @@
           const adminSnap = user.email === ADMIN_EMAIL ? null : await getDoc(doc(db, 'admins', user.email));
           currentUserIsAdmin = (user.email === ADMIN_EMAIL) || (adminSnap && adminSnap.exists());
           currentUserIsOwner = (user.email === ADMIN_EMAIL);
+          currentAdminPermissions = (adminSnap && adminSnap.exists() && Array.isArray(adminSnap.data().permissions)) ? adminSnap.data().permissions : null;
         } catch (e) {
           currentUserIsAdmin = (user.email === ADMIN_EMAIL);
           currentUserIsOwner = (user.email === ADMIN_EMAIL);
+          currentAdminPermissions = null;
         }
         document.getElementById('adminBtn').style.display = currentUserIsAdmin ? 'block' : 'none';
         document.getElementById('myOrdersBtn').style.display = currentUserIsAdmin ? 'none' : 'block';
@@ -2413,7 +2575,6 @@
         if (currentUserIsAdmin) checkAdminWarningBanner();
         if (currentUserIsOwner) checkMonthlyReferralReset();
 
-        // This is the Admin Console — only admin/owner accounts have anything to do here.
         if (currentUserIsAdmin) {
           document.getElementById('adminBtn')?.click();
         } else {
@@ -2861,6 +3022,19 @@
   const adminModal = document.getElementById('adminModal');
   const adminMsg = document.getElementById('adminMsg');
 
+  // Security: sign out of this standalone admin app after 15 minutes of no activity —
+  // more important here than on the public site, since this app has no "outside" content to fall back to.
+  let adminIdleTimer = null;
+  function resetAdminIdleTimer() {
+    if (adminIdleTimer) clearTimeout(adminIdleTimer);
+    adminIdleTimer = setTimeout(() => {
+      signOut(auth);
+      showGreetToast('🔒 Signed out after 15 minutes of inactivity, for security.');
+    }, 15 * 60 * 1000);
+  }
+  document.addEventListener('click', resetAdminIdleTimer);
+  document.addEventListener('keydown', resetAdminIdleTimer);
+
   async function loadAdminOrders(showArchived = false) {
     const list = document.getElementById('adminOrdersList');
     list.innerHTML = '<p style="color:var(--muted);font-size:13px;">Loading…</p>';
@@ -3061,19 +3235,27 @@
     requireAdminCode(openAdminPanelContent);
   });
 
+  const DEFAULT_ADMIN_TABS = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabBookings', 'adminTabWaitlist'];
   function openAdminPanelContent() {
     adminModal.style.display = 'flex';
     document.getElementById('adminOrderForm').style.display = currentUserIsAdmin ? 'grid' : 'none';
-    document.getElementById('adminTabAdmins').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabProducts').style.display = currentUserIsAdmin ? 'inline-block' : 'none';
-    document.getElementById('adminTabPortfolio').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabTeam').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabActivity').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabReferrals').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabWallets').style.display = currentUserIsOwner ? 'inline-block' : 'none';
-    document.getElementById('adminTabWallets').style.display = currentUserIsOwner ? 'inline-block' : 'none';
+    // Owner always sees every tab. A regular admin sees their custom-assigned tabs if the
+    // owner has set any via "Admin Access", otherwise falls back to the original default set.
+    const allowedTabs = currentUserIsOwner
+      ? adminTabs
+      : (currentAdminPermissions && currentAdminPermissions.length ? currentAdminPermissions : DEFAULT_ADMIN_TABS);
+    adminTabs.forEach(t => {
+      const el = document.getElementById(t);
+      if (!el) return;
+      const visible = t === 'adminTabPermissions' ? currentUserIsOwner : allowedTabs.includes(t);
+      el.style.display = visible ? 'inline-block' : 'none';
+    });
     document.getElementById('toggleArchivedBtn').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('exportBackupBtn').style.display = currentUserIsOwner ? 'inline-block' : 'none';
+    if (currentUserIsOwner) populatePermissionsAdminSelect();
+    const activeTab = adminTabs.find(t => document.getElementById(t)?.classList.contains('active'));
+    if (activeTab && !allowedTabs.includes(activeTab)) switchAdminTab('adminTabOrders');
+    resetAdminIdleTimer();
     loadAdminOrders();
     loadAdminStats();
   }
@@ -3238,8 +3420,8 @@
     });
   });
 
-  const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity'];
-  const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView' };
+  const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabPermissions', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity', 'adminTabChatInsights'];
+  const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabPermissions: 'adminPermissionsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView', adminTabChatInsights: 'adminChatInsightsView' };
   function switchAdminTab(activeTabId) {
     adminTabs.forEach(t => document.getElementById(t).classList.toggle('active', t === activeTabId));
     Object.values(adminViews).forEach(v => document.getElementById(v).style.display = 'none');
@@ -3247,6 +3429,16 @@
   }
   document.getElementById('adminTabOrders')?.addEventListener('click', () => switchAdminTab('adminTabOrders'));
   document.getElementById('adminTabCustomers')?.addEventListener('click', () => { switchAdminTab('adminTabCustomers'); loadAdminCustomers(); });
+  document.getElementById('adminTabPermissions')?.addEventListener('click', () => {
+    if (!currentUserIsOwner) return;
+    switchAdminTab('adminTabPermissions');
+    populatePermissionsAdminSelect();
+  });
+  document.getElementById('adminTabChatInsights')?.addEventListener('click', () => {
+    if (!currentUserIsOwner) return;
+    switchAdminTab('adminTabChatInsights');
+    loadChatInsights();
+  });
   document.getElementById('adminTabProducts')?.addEventListener('click', () => {
     if (!currentUserIsAdmin) return;
     switchAdminTab('adminTabProducts');
@@ -3543,10 +3735,104 @@
       await setDoc(doc(db, 'admins', email), { email, addedAt: serverTimestamp(), addedBy: ADMIN_EMAIL });
       e.target.reset();
       loadAdminAdmins();
+      populatePermissionsAdminSelect();
     } catch (err) {
       alert('Could not add admin.');
     }
   });
+
+  /* ---------------- Admin Access (per-admin tab permissions) ---------------- */
+  const adminTabLabels = {
+    adminTabOrders: 'Orders', adminTabCustomers: 'Customers', adminTabProducts: 'Packages',
+    adminTabPortfolio: 'Portfolio', adminTabTeam: 'Team', adminTabAdmins: 'Admins', adminTabPermissions: 'Admin Access',
+    adminTabReferrals: 'Referrals', adminTabWallets: 'Wallets', adminTabBookings: 'Booking Requests',
+    adminTabWaitlist: 'Waitlist', adminTabActivity: 'Activity Log', adminTabChatInsights: 'Chat Insights'
+  };
+  const PERMISSION_ASSIGNABLE_TABS = adminTabs.filter(t => t !== 'adminTabPermissions');
+  async function populatePermissionsAdminSelect() {
+    const select = document.getElementById('permAdminSelect');
+    if (!select) return;
+    const current = select.value;
+    try {
+      const snap = await getDocs(collection(db, 'admins'));
+      select.innerHTML = '<option value="">Select an admin…</option>' +
+        snap.docs.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.id)}</option>`).join('');
+      if (current) select.value = current;
+    } catch (e) { /* non-critical */ }
+  }
+  function renderPermissionCheckboxes(currentPerms) {
+    const grid = document.getElementById('permCheckboxGrid');
+    const active = currentPerms && currentPerms.length ? currentPerms : DEFAULT_ADMIN_TABS;
+    grid.innerHTML = PERMISSION_ASSIGNABLE_TABS.map(t => `
+      <label class="perm-checkbox-item">
+        <input type="checkbox" value="${t}" ${active.includes(t) ? 'checked' : ''}>
+        ${escapeHtml(adminTabLabels[t] || t)}
+      </label>`).join('');
+  }
+  document.getElementById('permAdminSelect')?.addEventListener('change', async (e) => {
+    const email = e.target.value;
+    const listWrap = document.getElementById('permCheckboxList');
+    if (!email) { listWrap.style.display = 'none'; return; }
+    listWrap.style.display = 'block';
+    document.getElementById('permMsg').textContent = '';
+    try {
+      const snap = await getDoc(doc(db, 'admins', email));
+      renderPermissionCheckboxes(snap.exists() ? snap.data().permissions : null);
+    } catch (e2) { renderPermissionCheckboxes(null); }
+  });
+  document.getElementById('savePermissionsBtn')?.addEventListener('click', async () => {
+    const email = document.getElementById('permAdminSelect').value;
+    const msg = document.getElementById('permMsg');
+    if (!email) return;
+    const selected = Array.from(document.querySelectorAll('#permCheckboxGrid input:checked')).map(cb => cb.value);
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Saving…';
+    try {
+      await updateDoc(doc(db, 'admins', email), { permissions: selected });
+      msg.style.color = 'var(--blue)'; msg.textContent = `Saved — ${email} now has access to ${selected.length} section${selected.length === 1 ? '' : 's'}.`;
+      logAdminActivity('Updated admin access', email);
+    } catch (err) {
+      msg.style.color = 'var(--pink)'; msg.textContent = 'Could not save. Check Firestore Rules are published.';
+    }
+  });
+
+  /* ---------------- Chat Insights ---------------- */
+  async function loadChatInsights() {
+    try {
+      const snap = await getDocs(query(collection(db, 'chatLogs'), orderBy('createdAt', 'desc')));
+      let total = 0, matched = 0, fallback = 0;
+      const topicCounts = {};
+      const unanswered = [];
+      snap.forEach(d => {
+        const c = d.data();
+        total++;
+        if (c.matched) { matched++; topicCounts[c.matchedKey || 'general'] = (topicCounts[c.matchedKey || 'general'] || 0) + 1; }
+        else { fallback++; if (unanswered.length < 15) unanswered.push(c.text); }
+      });
+      document.getElementById('chatStatTotal').textContent = total;
+      document.getElementById('chatStatMatched').textContent = matched;
+      document.getElementById('chatStatFallback').textContent = fallback;
+      const sortedTopics = Object.entries(topicCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const topicsBox = document.getElementById('chatTopTopics');
+      if (!sortedTopics.length) { topicsBox.innerHTML = '<p style="color:var(--muted);font-size:13px;">No questions logged yet.</p>'; }
+      else {
+        const maxCount = sortedTopics[0][1];
+        topicsBox.innerHTML = sortedTopics.map(([topic, count]) => `
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:12.5px;flex:0 0 110px;text-transform:capitalize;">${escapeHtml(topic)}</span>
+            <div style="flex:1;background:var(--bg-alt);border-radius:100px;height:8px;overflow:hidden;">
+              <div style="width:${(count / maxCount) * 100}%;height:100%;background:var(--grad);"></div>
+            </div>
+            <span style="font-size:12px;color:var(--muted);flex-shrink:0;">${count}</span>
+          </div>`).join('');
+      }
+      const unansweredBox = document.getElementById('chatUnansweredList');
+      unansweredBox.innerHTML = unanswered.length
+        ? unanswered.map(t => `<div class="admin-order-row"><div class="info"><span>${escapeHtml(t)}</span></div></div>`).join('')
+        : '<p style="color:var(--muted);font-size:13px;">Nothing unanswered recently — nice!</p>';
+    } catch (err) {
+      console.error('Chat insights load failed:', err);
+    }
+  }
 
   /* ---------------- Products / Packages ---------------- */
   async function loadAdminProducts() {
@@ -3675,15 +3961,17 @@
     const file = e.target.files[0];
     if (!file) return;
     const status = document.getElementById('prodImageStatus');
-    status.textContent = 'Compressing…';
+    status.textContent = 'Preparing…';
     try {
-      const dataUrl = await compressImageFile(file, 1000, 0.88);
-      selectedProductImage = dataUrl;
-      document.getElementById('prodImagePreview').src = dataUrl;
-      document.getElementById('prodImagePreview').style.display = 'block';
-      status.textContent = 'Ready to add';
-      // Save to gallery for reuse on future packages
-      try { await addDoc(packageImagesCol, { image: dataUrl, createdAt: serverTimestamp() }); } catch (e2) { /* non-critical */ }
+      const rawDataUrl = await compressImageFile(file, 1200, 0.92);
+      status.textContent = '';
+      openImageCropper(rawDataUrl, async (finalDataUrl) => {
+        selectedProductImage = finalDataUrl;
+        document.getElementById('prodImagePreview').src = finalDataUrl;
+        document.getElementById('prodImagePreview').style.display = 'block';
+        status.textContent = 'Ready to add';
+        try { await addDoc(packageImagesCol, { image: finalDataUrl, createdAt: serverTimestamp() }); } catch (e2) { /* non-critical */ }
+      });
     } catch (err) {
       status.textContent = 'Could not process image.';
     }
@@ -3717,11 +4005,13 @@
               } catch (e) { alert('Could not update image.'); }
             });
           } else if (changeImageTargetId) {
-            try {
-              await updateDoc(doc(db, collName, changeImageTargetId), { image: docSnap.data().image });
-              modal.style.display = 'none';
-              loadAdminProducts(); loadShopProducts();
-            } catch (e) { alert('Could not update image.'); }
+            modal.style.display = 'none';
+            openImageCropper(docSnap.data().image, async (finalDataUrl) => {
+              try {
+                await updateDoc(doc(db, collName, changeImageTargetId), { image: finalDataUrl });
+                loadAdminProducts(); loadShopProducts();
+              } catch (e) { alert('Could not update image.'); }
+            });
           } else if (galleryPickerMode === 'team') {
             modal.style.display = 'none';
             openImageCropper(docSnap.data().image, (finalDataUrl) => {
@@ -3731,11 +4021,13 @@
               document.getElementById('teamImageStatus').textContent = 'Ready to add';
             });
           } else {
-            selectedProductImage = docSnap.data().image;
-            document.getElementById('prodImagePreview').src = selectedProductImage;
-            document.getElementById('prodImagePreview').style.display = 'block';
-            document.getElementById('prodImageStatus').textContent = 'Ready to add';
             modal.style.display = 'none';
+            openImageCropper(docSnap.data().image, (finalDataUrl) => {
+              selectedProductImage = finalDataUrl;
+              document.getElementById('prodImagePreview').src = finalDataUrl;
+              document.getElementById('prodImagePreview').style.display = 'block';
+              document.getElementById('prodImageStatus').textContent = 'Ready to add';
+            });
           }
         });
         grid.appendChild(img);
