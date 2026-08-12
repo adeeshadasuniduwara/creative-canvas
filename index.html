@@ -905,6 +905,12 @@
   .order-badge{font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
   .order-badge.progress{background:rgba(47,155,240,0.15);color:var(--blue);}
   .order-badge.ready{background:rgba(76,217,100,0.15);color:#4cd964;}
+  .order-badge.priority-urgent{background:rgba(255,61,119,0.15);color:var(--pink);}
+  .order-badge.priority-low{background:rgba(255,176,32,0.15);color:var(--gold-text);}
+  .cust-tag{display:inline-flex;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:100px;margin-left:6px;}
+  .cust-tag-vip{background:rgba(255,176,32,0.15);color:var(--gold-text);}
+  .cust-tag-risk{background:rgba(255,61,119,0.15);color:var(--pink);}
+  .cust-tag-blacklist{background:rgba(154,154,165,0.2);color:var(--muted);}
   .order-countdown{font-size:13px;color:var(--muted);margin-bottom:8px;}
   .order-countdown b{color:var(--text);font-size:15px;}
   .progress-bar{height:6px;background:var(--line);border-radius:100px;overflow:hidden;margin-bottom:16px;}
@@ -1538,6 +1544,13 @@
       <button type="button" id="toggleArchivedBtn" class="mini-btn" data-showing="active">📦 Archived Orders</button>
     </div>
     <input type="text" id="orderSearchInput" placeholder="Search by customer email or order title…" style="width:100%;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Inter';font-size:13.5px;margin-bottom:14px;">
+    <div id="orderBulkBar" style="display:none;background:var(--card);border:1px solid var(--pink);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <span id="orderBulkCount" style="font-size:12.5px;font-weight:600;"></span>
+      <div style="display:flex;gap:8px;">
+        <button type="button" id="bulkMarkReadyBtn" class="mini-btn">Mark Ready</button>
+        <button type="button" id="bulkArchiveBtn" class="mini-btn danger">Archive Selected</button>
+      </div>
+    </div>
     <div id="adminOrdersList" class="admin-list-grid"></div>
     </div>
     <div id="adminCustomersView" style="display:none;">
@@ -2823,6 +2836,19 @@
     return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
   }
 
+  // Admin Panel inactivity auto-close — closes the panel (not a full sign-out) after 15
+  // minutes with no clicks/typing inside it, so a forgotten open tab doesn't stay exposed.
+  let adminIdleTimer = null;
+  function resetAdminIdleTimer() {
+    if (adminIdleTimer) clearTimeout(adminIdleTimer);
+    if (adminModal.style.display !== 'flex') return;
+    adminIdleTimer = setTimeout(() => {
+      adminModal.style.display = 'none';
+      document.body.style.overflow = '';
+      showGreetToast('🔒 Admin Panel closed after 15 minutes of inactivity.');
+    }, 15 * 60 * 1000);
+  }
+
   if (firebaseReady) {
     function checkDailyAutoLogout() {
       if (!auth.currentUser) return;
@@ -3033,6 +3059,30 @@
     } catch (e) { usdtRateLKR = null; }
     return usdtRateLKR;
   }
+
+  function updateOrderBulkBar() {
+    const checked = document.querySelectorAll('.order-bulk-check:checked');
+    const bar = document.getElementById('orderBulkBar');
+    if (!bar) return;
+    bar.style.display = checked.length ? 'flex' : 'none';
+    document.getElementById('orderBulkCount').textContent = `${checked.length} order${checked.length === 1 ? '' : 's'} selected`;
+  }
+  document.getElementById('bulkArchiveBtn')?.addEventListener('click', async () => {
+    const ids = Array.from(document.querySelectorAll('.order-bulk-check:checked')).map(cb => cb.dataset.id);
+    if (!ids.length || !confirm(`Archive ${ids.length} selected order(s)?`)) return;
+    await Promise.all(ids.map(id => updateDoc(doc(db, 'orders', id), { archived: true })));
+    logAdminActivity('Bulk archived orders', `${ids.length} orders`);
+    loadAdminOrders();
+  });
+  document.getElementById('bulkMarkReadyBtn')?.addEventListener('click', async () => {
+    const ids = Array.from(document.querySelectorAll('.order-bulk-check:checked')).map(cb => cb.dataset.id);
+    if (!ids.length) return;
+    const link = prompt(`Same Google Drive link for all ${ids.length} selected orders:`);
+    if (!link) return;
+    await Promise.all(ids.map(id => updateDoc(doc(db, 'orders', id), { status: 'ready', driveLink: link.trim() })));
+    logAdminActivity('Bulk marked ready', `${ids.length} orders`);
+    loadAdminOrders();
+  });
 
   function orderCardHtml(o, id, rate) {
     const remaining = daysRemaining(o);
@@ -3328,10 +3378,15 @@
   /* ---------------- Admin Panel ---------------- */
   const adminModal = document.getElementById('adminModal');
   const adminMsg = document.getElementById('adminMsg');
+  adminModal.addEventListener('click', resetAdminIdleTimer);
+  adminModal.addEventListener('keydown', resetAdminIdleTimer);
+  adminModal.addEventListener('input', resetAdminIdleTimer);
 
   async function loadAdminOrders(showArchived = false) {
     const list = document.getElementById('adminOrdersList');
     list.innerHTML = '<p style="color:var(--muted);font-size:13px;">Loading…</p>';
+    const bulkBar = document.getElementById('orderBulkBar');
+    if (bulkBar) bulkBar.style.display = 'none';
     try {
       const q = query(ordersCol, orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
@@ -3350,22 +3405,47 @@
         const row = document.createElement('div');
         row.className = 'admin-order-row';
         row.dataset.search = ((o.customerEmail || '') + ' ' + (o.title || '') + ' ' + (o.orderNumber || '')).toLowerCase();
+        const priority = o.priority || 'normal';
+        const priorityBadge = priority !== 'normal' ? `<span class="order-badge priority-${priority}">${priority === 'urgent' ? '🔴 Urgent' : '🟡 Low'}</span>` : '';
         row.innerHTML = `
           <div class="info">
-            <b>${o.orderNumber ? `<span style="color:var(--gold-text);">${o.orderNumber}</span> — ` : ''}${escapeHtml(o.title || 'Order')}</b>
+            ${!showArchived && currentUserIsOwner ? `<input type="checkbox" class="order-bulk-check" data-id="${docSnap.id}" style="margin-right:8px;accent-color:var(--pink);">` : ''}
+            <b>${o.orderNumber ? `<span style="color:var(--gold-text);">${o.orderNumber}</span> — ` : ''}${escapeHtml(o.title || 'Order')} ${priorityBadge}</b>
             <span>${escapeHtml(o.customerEmail || '')} · ${o.days} days · Rs. ${(o.totalAmount||0).toLocaleString()} (Adv. Rs. ${(o.advancePayment||0).toLocaleString()}) ${paymentBadge}</span>
+            ${o.adminNote ? `<span style="display:block;color:var(--gold-text);font-size:11.5px;margin-top:4px;">📝 ${escapeHtml(o.adminNote)}</span>` : ''}
           </div>
           <div class="actions">
             ${showArchived ? '' : (o.status === 'ready' ? '<span class="order-badge ready">Ready</span>' : `<button class="mini-btn" data-action="ready" data-id="${docSnap.id}" data-email="${escapeHtml(o.customerEmail||'')}" data-title="${escapeHtml(o.title||'Order')}">Mark Ready</button>`)}
             ${o.paymentProof ? `<button class="mini-btn" data-action="view-proof" data-id="${docSnap.id}">View Proof</button>` : ''}
             ${!showArchived && currentUserIsOwner && needsPayment && o.paymentStatus === 'proof_submitted' ? `<button class="mini-btn" data-action="approve" data-id="${docSnap.id}">Approve Payment</button>` : ''}
             ${!showArchived && currentUserIsAdmin ? `<button class="mini-btn" data-action="edit" data-id="${docSnap.id}" data-days="${o.days}" data-total="${o.totalAmount||0}" data-advance="${o.advancePayment||0}" data-eventdate="${o.eventDate||''}" data-title="${escapeHtml(o.title||'')}">Edit</button>` : ''}
+            ${!showArchived && currentUserIsAdmin ? `<button class="mini-btn" data-action="priority" data-id="${docSnap.id}" data-priority="${priority}">Priority</button>` : ''}
+            ${!showArchived && currentUserIsAdmin ? `<button class="mini-btn" data-action="note" data-id="${docSnap.id}" data-note="${escapeHtml(o.adminNote || '')}">Note</button>` : ''}
             ${!showArchived && currentUserIsOwner ? `<button class="mini-btn danger" data-action="delete" data-id="${docSnap.id}">Archive</button>` : ''}
             ${showArchived && currentUserIsOwner ? `<button class="mini-btn" data-action="restore" data-id="${docSnap.id}">Restore</button>` : ''}
             ${showArchived && currentUserIsOwner ? `<button class="mini-btn danger" data-action="delete-forever" data-id="${docSnap.id}">Delete Permanently</button>` : ''}
           </div>`;
         list.appendChild(row);
         if (o.paymentProof) row.dataset.proof = o.paymentProof;
+      });
+      list.querySelectorAll('.order-bulk-check').forEach(cb => {
+        cb.addEventListener('change', updateOrderBulkBar);
+      });
+      list.querySelectorAll('[data-action="priority"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const cycle = { normal: 'urgent', urgent: 'low', low: 'normal' };
+          const next = cycle[btn.dataset.priority] || 'normal';
+          await updateDoc(doc(db, 'orders', btn.dataset.id), { priority: next });
+          loadAdminOrders(showArchived);
+        });
+      });
+      list.querySelectorAll('[data-action="note"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const note = prompt('Internal note (only admins see this):', btn.dataset.note || '');
+          if (note === null) return;
+          await updateDoc(doc(db, 'orders', btn.dataset.id), { adminNote: note.trim() });
+          loadAdminOrders(showArchived);
+        });
       });
       list.querySelectorAll('[data-action="ready"]').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -3554,6 +3634,7 @@
     document.getElementById('toggleArchivedBtn').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     document.getElementById('exportBackupBtn').style.display = currentUserIsOwner ? 'inline-block' : 'none';
     if (currentUserIsOwner) populatePermissionsAdminSelect();
+    resetAdminIdleTimer();
     // If the current tab isn't in the allowed set (e.g. permissions changed), fall back to Orders
     const activeTab = adminTabs.find(t => document.getElementById(t)?.classList.contains('active'));
     if (activeTab && !allowedTabs.includes(activeTab)) switchAdminTab('adminTabOrders');
@@ -4209,6 +4290,7 @@
           <div class="actions">
             <button class="mini-btn" data-action="edit-product" data-id="${docSnap.id}">Edit</button>
             <button class="mini-btn" data-action="change-image" data-id="${docSnap.id}">🖼️ Change Image</button>
+            <button class="mini-btn" data-action="clone-product" data-id="${docSnap.id}">📋 Clone</button>
             <button class="mini-btn danger" data-action="delete-product" data-id="${docSnap.id}">Delete</button>
           </div>`;
         list.appendChild(row);
@@ -4219,6 +4301,18 @@
           await deleteDoc(doc(db, 'products', btn.dataset.id));
           loadAdminProducts();
           loadShopProducts();
+        });
+      });
+      list.querySelectorAll('[data-action="clone-product"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            const srcSnap = await getDoc(doc(db, 'products', btn.dataset.id));
+            if (!srcSnap.exists()) return;
+            const data = srcSnap.data();
+            await addDoc(productsCol, { ...data, name: (data.name || 'Package') + ' (Copy)', createdAt: serverTimestamp() });
+            loadAdminProducts();
+            loadShopProducts();
+          } catch (e) { alert('Could not clone package.'); }
         });
       });
       list.querySelectorAll('[data-action="change-image"]').forEach(btn => {
@@ -6115,6 +6209,12 @@
           }
         });
       } catch (e) { /* non-critical */ }
+      try {
+        const tagSnap = await getDocs(collection(db, 'customerTags'));
+        tagSnap.forEach(d => {
+          if (customers[d.id]) customers[d.id].tag = d.data().tag || null;
+        });
+      } catch (e) { /* non-critical */ }
       const list_ = Object.values(customers);
       list.innerHTML = list_.length ? '' : '<p style="color:var(--muted);font-size:13px;">No customers yet.</p>';
       list_.forEach(c => {
@@ -6122,16 +6222,28 @@
         row.className = 'admin-order-row';
         row.dataset.search = ((c.name || '') + ' ' + c.email).toLowerCase();
         const waNumber = c.whatsapp ? c.whatsapp.replace(/[^0-9]/g, '') : null;
+        const tagBadge = c.tag ? `<span class="cust-tag cust-tag-${c.tag}">${c.tag === 'vip' ? '⭐ VIP' : c.tag === 'risk' ? '⚠️ At-Risk' : '🚫 Blacklisted'}</span>` : '';
         row.innerHTML = `
           <div class="info">
-            <b>${escapeHtml(c.name || c.email)}</b>
+            <b>${escapeHtml(c.name || c.email)} ${tagBadge}</b>
             <span>${escapeHtml(c.email)} · ${c.sources.length} record${c.sources.length > 1 ? 's' : ''}</span>
           </div>
           <div class="actions">
             <a class="mini-btn" href="https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(c.email)}" target="_blank" rel="noopener">Email</a>
             ${waNumber ? `<a class="mini-btn" href="https://wa.me/${waNumber}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+            <button type="button" class="mini-btn" data-action="cycle-tag" data-email="${escapeHtml(c.email)}" data-tag="${c.tag || ''}">Tag</button>
           </div>`;
         list.appendChild(row);
+      });
+      list.querySelectorAll('[data-action="cycle-tag"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const cycle = { '': 'vip', vip: 'risk', risk: 'blacklist', blacklist: '' };
+          const next = cycle[btn.dataset.tag] ?? '';
+          try {
+            await setDoc(doc(db, 'customerTags', btn.dataset.email), { tag: next || null, email: btn.dataset.email });
+            loadAdminCustomers();
+          } catch (e) { alert('Could not save tag — check Firestore Rules are published for customerTags.'); }
+        });
       });
       compactifyRowActions('adminCustomersList');
     } catch (err) {
