@@ -3977,7 +3977,7 @@
         btn.addEventListener('click', () => loadTimeTrackerSessions(btn.dataset.viewSessions));
       });
     } catch (err) {
-      list.innerHTML = errorStateHtml("Couldn't load time tracking data — check Firestore Rules are published.");
+      list.innerHTML = errorStateHtml("Couldn't load time tracking data — " + (err.message || err) + ". If this mentions an index, open the browser/app console (F12) and click the link Firestore gives you to auto-create it.");
     }
   }
   document.getElementById('timeTrackerBackBtn')?.addEventListener('click', () => {
@@ -4011,7 +4011,7 @@
         btn.addEventListener('click', () => loadTimeTrackerShots(btn.dataset.viewShots));
       });
     } catch (err) {
-      list.innerHTML = errorStateHtml("Couldn't load sessions.");
+      list.innerHTML = errorStateHtml("Couldn't load sessions — " + (err.message || err) + ". If this mentions an index, open the browser/app console (F12) and click the link Firestore gives you to auto-create it.");
     }
   }
   async function loadTimeTrackerShots(sessionId) {
@@ -4035,7 +4035,7 @@
       }));
       grid.innerHTML = items.join('') || emptyStateHtml('📷', "Screenshots exist but couldn't load — check Storage Rules are published.");
     } catch (err) {
-      grid.innerHTML = errorStateHtml("Couldn't load screenshots — check Firestore Rules are published.");
+      grid.innerHTML = errorStateHtml("Couldn't load screenshots — " + (err.message || err) + ". If this mentions an index, open the browser/app console (F12) and click the link Firestore gives you to auto-create it.");
     }
   }
   document.getElementById('timeTrackerShotsClose')?.addEventListener('click', () => {
