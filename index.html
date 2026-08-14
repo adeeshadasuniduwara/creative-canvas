@@ -1525,6 +1525,7 @@
       <button class="auth-tab" id="adminTabWaitlist" type="button">Waitlist</button>
       <button class="auth-tab" id="adminTabActivity" type="button" style="display:none;">Activity Log</button>
       <button class="auth-tab" id="adminTabChatInsights" type="button" style="display:none;">Chat Insights</button>
+      <button class="auth-tab" id="adminTabTimeTracker" type="button" style="display:none;">Time Tracker</button>
       <button class="auth-tab" id="adminTabPermissions" type="button" style="display:none;">Admin Access</button>
     </div>
     <div id="adminOrdersView">
@@ -1701,6 +1702,23 @@
       <h4 style="font-size:14px;margin-bottom:10px;">❓ Recent "Couldn't Answer" Questions</h4>
       <div id="chatUnansweredList" class="admin-list-grid"></div>
     </div>
+    <div id="adminTimeTrackerView" style="display:none;">
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Hours tracked per admin, for payroll. Screenshots here are private — visible only to you.</p>
+      <div id="timeTrackerAdminList" class="admin-list-grid"></div>
+      <div id="timeTrackerSessions" style="display:none;margin-top:20px;">
+        <button type="button" id="timeTrackerBackBtn" class="mini-btn" style="margin-bottom:14px;">← Back to admins</button>
+        <h4 id="timeTrackerSessionsTitle" style="font-size:15px;margin-bottom:12px;"></h4>
+        <div id="timeTrackerSessionsList" class="admin-list-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="timeTrackerShotsModal" style="display:none;background:rgba(2,2,4,0.94);">
+  <button class="modal-close" id="timeTrackerShotsClose" aria-label="Close" style="position:fixed;top:20px;right:24px;font-size:32px;">&times;</button>
+  <div class="modal-card" style="max-width:1000px;max-height:88vh;overflow-y:auto;">
+    <h3 style="font-size:16px;margin-bottom:14px;" id="timeTrackerShotsTitle">Screenshots</h3>
+    <div id="timeTrackerShotsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;"></div>
   </div>
 </div>
 
@@ -2108,6 +2126,8 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc, runTransaction, Timestamp, limit }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getStorage, ref, getDownloadURL }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
     GoogleAuthProvider, signInWithPopup, signOut,
@@ -2124,10 +2144,11 @@
     appId: "1:580448699959:web:df3722bb883dd8a40ca1b2"
   };
 
-  let db, reviewsCol, auth, firebaseReady = false;
+  let db, reviewsCol, auth, storage, firebaseReady = false;
   try {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    storage = getStorage(app);
     reviewsCol = collection(db, "reviews");
     auth = getAuth(app);
     setPersistence(auth, browserLocalPersistence).catch((e) => console.error('Auth persistence error:', e));
@@ -2180,11 +2201,6 @@
   function closeAuthModal() { authModal.style.display = 'none'; }
   signInBtn?.addEventListener('click', (e) => { e.preventDefault(); openAuthModal(); });
   reviewSignInBtn?.addEventListener('click', () => openAuthModal());
-  document.getElementById('gateSignInBtn')?.addEventListener('click', () => openAuthModal());
-  document.getElementById('gateSignUpBtn')?.addEventListener('click', () => {
-    openAuthModal();
-    document.querySelector('.auth-tab[data-tab="signup"]')?.click();
-  });
   authClose?.addEventListener('click', closeAuthModal);
   authModal?.addEventListener('click', (e) => { if (e.target === authModal) closeAuthModal(); });
 
@@ -3628,7 +3644,7 @@
     adminTabs.forEach(t => {
       const el = document.getElementById(t);
       if (!el) return;
-      const visible = t === 'adminTabPermissions' ? currentUserIsOwner : allowedTabs.includes(t);
+      const visible = (t === 'adminTabPermissions' || t === 'adminTabTimeTracker') ? currentUserIsOwner : allowedTabs.includes(t);
       el.style.display = visible ? 'inline-block' : 'none';
     });
     document.getElementById('toggleArchivedBtn').style.display = currentUserIsOwner ? 'inline-block' : 'none';
@@ -3849,13 +3865,14 @@
     });
   });
 
-  const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabPermissions', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity', 'adminTabChatInsights'];
-  const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabPermissions: 'adminPermissionsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView', adminTabChatInsights: 'adminChatInsightsView' };
+  const adminTabs = ['adminTabOrders', 'adminTabCustomers', 'adminTabProducts', 'adminTabPortfolio', 'adminTabTeam', 'adminTabAdmins', 'adminTabPermissions', 'adminTabReferrals', 'adminTabWallets', 'adminTabBookings', 'adminTabWaitlist', 'adminTabActivity', 'adminTabChatInsights', 'adminTabTimeTracker'];
+  const adminViews = { adminTabOrders: 'adminOrdersView', adminTabCustomers: 'adminCustomersView', adminTabProducts: 'adminProductsView', adminTabPortfolio: 'adminPortfolioView', adminTabTeam: 'adminTeamView', adminTabAdmins: 'adminAdminsView', adminTabPermissions: 'adminPermissionsView', adminTabReferrals: 'adminReferralsView', adminTabWallets: 'adminWalletsView', adminTabBookings: 'adminBookingsView', adminTabWaitlist: 'adminWaitlistView', adminTabActivity: 'adminActivityView', adminTabChatInsights: 'adminChatInsightsView', adminTabTimeTracker: 'adminTimeTrackerView' };
   const adminTabLabels = {
     adminTabOrders: 'Orders', adminTabCustomers: 'Customers', adminTabProducts: 'Packages',
     adminTabPortfolio: 'Portfolio', adminTabTeam: 'Team', adminTabAdmins: 'Admins', adminTabPermissions: 'Admin Access',
     adminTabReferrals: 'Referrals', adminTabWallets: 'Wallets', adminTabBookings: 'Booking Requests',
-    adminTabWaitlist: 'Waitlist', adminTabActivity: 'Activity Log', adminTabChatInsights: 'Chat Insights'
+    adminTabWaitlist: 'Waitlist', adminTabActivity: 'Activity Log', adminTabChatInsights: 'Chat Insights',
+    adminTabTimeTracker: 'Time Tracker'
   };
   function switchAdminTab(activeTabId) {
     adminTabs.forEach(t => document.getElementById(t).classList.toggle('active', t === activeTabId));
@@ -3919,6 +3936,115 @@
     switchAdminTab('adminTabChatInsights');
     loadChatInsights();
   });
+  document.getElementById('adminTabTimeTracker')?.addEventListener('click', () => {
+    if (!currentUserIsOwner) return;
+    switchAdminTab('adminTabTimeTracker');
+    loadTimeTrackerAdmins();
+  });
+
+  /* ---------------- Time Tracker (owner-only) ---------------- */
+  function formatDuration(totalSeconds) {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    return `${h}h ${m}m`;
+  }
+  async function loadTimeTrackerAdmins() {
+    const list = document.getElementById('timeTrackerAdminList');
+    document.getElementById('timeTrackerSessions').style.display = 'none';
+    list.innerHTML = skeletonGridHtml(3);
+    try {
+      const snap = await getDocs(query(collection(db, 'timeTrackingSessions'), orderBy('startedAt', 'desc')));
+      const byAdmin = {};
+      snap.forEach(d => {
+        const s = d.data();
+        if (!byAdmin[s.adminEmail]) byAdmin[s.adminEmail] = { totalSeconds: 0, sessionCount: 0, lastActive: s.startedAt };
+        byAdmin[s.adminEmail].totalSeconds += s.totalSeconds || 0;
+        byAdmin[s.adminEmail].sessionCount++;
+      });
+      const emails = Object.keys(byAdmin);
+      if (!emails.length) { list.innerHTML = emptyStateHtml('⏱️', 'No tracked time yet — sessions will appear here once an admin uses the Time Tracker app.'); return; }
+      list.innerHTML = emails.map(email => `
+        <div class="admin-order-row">
+          <div class="info">
+            <b>${escapeHtml(email)}</b>
+            <span>${formatDuration(byAdmin[email].totalSeconds)} total · ${byAdmin[email].sessionCount} session${byAdmin[email].sessionCount > 1 ? 's' : ''}</span>
+          </div>
+          <div class="actions">
+            <button type="button" class="mini-btn" data-view-sessions="${escapeHtml(email)}">View Sessions</button>
+          </div>
+        </div>`).join('');
+      list.querySelectorAll('[data-view-sessions]').forEach(btn => {
+        btn.addEventListener('click', () => loadTimeTrackerSessions(btn.dataset.viewSessions));
+      });
+    } catch (err) {
+      list.innerHTML = errorStateHtml("Couldn't load time tracking data — check Firestore Rules are published.");
+    }
+  }
+  document.getElementById('timeTrackerBackBtn')?.addEventListener('click', () => {
+    document.getElementById('timeTrackerSessions').style.display = 'none';
+  });
+  async function loadTimeTrackerSessions(email) {
+    const wrap = document.getElementById('timeTrackerSessions');
+    const list = document.getElementById('timeTrackerSessionsList');
+    wrap.style.display = 'block';
+    document.getElementById('timeTrackerSessionsTitle').textContent = email;
+    list.innerHTML = skeletonGridHtml(3);
+    try {
+      const snap = await getDocs(query(collection(db, 'timeTrackingSessions'), where('adminEmail', '==', email), orderBy('startedAt', 'desc')));
+      if (snap.empty) { list.innerHTML = emptyStateHtml('⏱️', 'No sessions found.'); return; }
+      list.innerHTML = snap.docs.map(d => {
+        const s = d.data();
+        const started = s.startedAt && s.startedAt.toDate ? s.startedAt.toDate().toLocaleString() : '—';
+        const duration = s.totalSeconds ? formatDuration(s.totalSeconds) : (s.status === 'active' ? '🟢 Still tracking' : '—');
+        return `
+          <div class="admin-order-row">
+            <div class="info">
+              <b>${started}</b>
+              <span>${duration}</span>
+            </div>
+            <div class="actions">
+              <button type="button" class="mini-btn" data-view-shots="${d.id}">View Screenshots</button>
+            </div>
+          </div>`;
+      }).join('');
+      list.querySelectorAll('[data-view-shots]').forEach(btn => {
+        btn.addEventListener('click', () => loadTimeTrackerShots(btn.dataset.viewShots));
+      });
+    } catch (err) {
+      list.innerHTML = errorStateHtml("Couldn't load sessions.");
+    }
+  }
+  async function loadTimeTrackerShots(sessionId) {
+    const modal = document.getElementById('timeTrackerShotsModal');
+    const grid = document.getElementById('timeTrackerShotsGrid');
+    modal.style.display = 'flex';
+    grid.innerHTML = skeletonGridHtml(4);
+    try {
+      const snap = await getDocs(query(collection(db, 'timeTrackerShots'), where('sessionId', '==', sessionId), orderBy('takenAt', 'asc')));
+      if (snap.empty) { grid.innerHTML = emptyStateHtml('📷', 'No screenshots for this session (or it just started).'); return; }
+      const items = await Promise.all(snap.docs.map(async d => {
+        const s = d.data();
+        try {
+          const url = await getDownloadURL(ref(storage, s.storagePath));
+          const time = s.takenAt && s.takenAt.toDate ? s.takenAt.toDate().toLocaleTimeString() : '';
+          return `<a href="${url}" target="_blank" rel="noopener" style="display:block;border-radius:10px;overflow:hidden;border:1px solid var(--line);">
+            <img src="${url}" style="width:100%;display:block;" loading="lazy">
+            <span style="display:block;padding:6px 8px;font-size:11px;color:var(--muted);">${time}</span>
+          </a>`;
+        } catch (e) { return ''; }
+      }));
+      grid.innerHTML = items.join('') || emptyStateHtml('📷', "Screenshots exist but couldn't load — check Storage Rules are published.");
+    } catch (err) {
+      grid.innerHTML = errorStateHtml("Couldn't load screenshots — check Firestore Rules are published.");
+    }
+  }
+  document.getElementById('timeTrackerShotsClose')?.addEventListener('click', () => {
+    document.getElementById('timeTrackerShotsModal').style.display = 'none';
+  });
+  document.getElementById('timeTrackerShotsModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'timeTrackerShotsModal') e.target.style.display = 'none';
+  });
+
   async function loadChatInsights() {
     try {
       const snap = await getDocs(query(collection(db, 'chatLogs'), orderBy('createdAt', 'desc')));
@@ -4217,7 +4343,7 @@
   });
 
   /* ---------------- Admin Access (per-admin tab permissions) ---------------- */
-  const PERMISSION_ASSIGNABLE_TABS = adminTabs.filter(t => t !== 'adminTabPermissions');
+  const PERMISSION_ASSIGNABLE_TABS = adminTabs.filter(t => t !== 'adminTabPermissions' && t !== 'adminTabTimeTracker');
   async function populatePermissionsAdminSelect() {
     const select = document.getElementById('permAdminSelect');
     if (!select) return;
