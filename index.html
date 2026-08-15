@@ -1703,13 +1703,11 @@
       <div id="chatUnansweredList" class="admin-list-grid"></div>
     </div>
     <div id="adminTimeTrackerView" style="display:none;">
-      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Hours tracked per admin, for payroll. Screenshots here are private — visible only to you.</p>
-      <div id="timeTrackerAdminList" class="admin-list-grid"></div>
-      <div id="timeTrackerSessions" style="display:none;margin-top:20px;">
-        <button type="button" id="timeTrackerBackBtn" class="mini-btn" style="margin-bottom:14px;">← Back to admins</button>
-        <h4 id="timeTrackerSessionsTitle" style="font-size:15px;margin-bottom:12px;"></h4>
-        <div id="timeTrackerSessionsList" class="admin-list-grid"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <p style="color:var(--muted);font-size:13.5px;margin:0;">Hours tracked per admin, for payroll. Screenshots here are private — visible only to you and that admin.</p>
+        <button type="button" id="timeTrackerExportBtn" class="mini-btn">⬇ Export CSV</button>
       </div>
+      <div id="timeTrackerAdminList" class="admin-list-grid"></div>
     </div>
   </div>
 </div>
@@ -3948,95 +3946,148 @@
     const m = Math.floor((totalSeconds % 3600) / 60);
     return `${h}h ${m}m`;
   }
+  let timeTrackerAllSessions = []; // cached for CSV export
   async function loadTimeTrackerAdmins() {
     const list = document.getElementById('timeTrackerAdminList');
-    document.getElementById('timeTrackerSessions').style.display = 'none';
     list.innerHTML = skeletonGridHtml(3);
     try {
       const snap = await getDocs(query(collection(db, 'timeTrackingSessions'), orderBy('startedAt', 'desc')));
       const byAdmin = {};
+      timeTrackerAllSessions = [];
       snap.forEach(d => {
         const s = d.data();
-        if (!byAdmin[s.adminEmail]) byAdmin[s.adminEmail] = { totalSeconds: 0, sessionCount: 0, lastActive: s.startedAt };
+        timeTrackerAllSessions.push(s);
+        if (!byAdmin[s.adminEmail]) byAdmin[s.adminEmail] = { totalSeconds: 0, sessionCount: 0 };
         byAdmin[s.adminEmail].totalSeconds += s.totalSeconds || 0;
         byAdmin[s.adminEmail].sessionCount++;
       });
       const emails = Object.keys(byAdmin);
       if (!emails.length) { list.innerHTML = emptyStateHtml('⏱️', 'No tracked time yet — sessions will appear here once an admin uses the Time Tracker app.'); return; }
-      list.innerHTML = emails.map(email => `
+      // Fetch each admin's saved hourly rate (stored on their admins/{email} doc)
+      const rates = {};
+      await Promise.all(emails.map(async email => {
+        try {
+          const aSnap = await getDoc(doc(db, 'admins', email));
+          rates[email] = (aSnap.exists() && aSnap.data().hourlyRate) || 0;
+        } catch (e) { rates[email] = 0; }
+      }));
+      list.innerHTML = emails.map(email => {
+        const hours = byAdmin[email].totalSeconds / 3600;
+        const rate = rates[email] || 0;
+        const pay = Math.round(hours * rate);
+        return `
         <div class="admin-order-row">
           <div class="info">
             <b>${escapeHtml(email)}</b>
             <span>${formatDuration(byAdmin[email].totalSeconds)} total · ${byAdmin[email].sessionCount} session${byAdmin[email].sessionCount > 1 ? 's' : ''}</span>
+            <span style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+              Rs. <input type="number" min="0" class="tt-rate-input" data-rate-email="${escapeHtml(email)}" value="${rate || ''}" placeholder="0" style="width:70px;background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--text);font-family:'Inter';font-size:12px;">
+              /hr ${rate ? `→ <b style="color:var(--gold-text);">Est. pay: Rs. ${pay.toLocaleString()}</b>` : ''}
+            </span>
           </div>
           <div class="actions">
-            <button type="button" class="mini-btn" data-view-sessions="${escapeHtml(email)}">View Sessions</button>
+            <button type="button" class="mini-btn" data-view-shots-admin="${escapeHtml(email)}">📷 View Screenshots</button>
           </div>
-        </div>`).join('');
-      list.querySelectorAll('[data-view-sessions]').forEach(btn => {
-        btn.addEventListener('click', () => loadTimeTrackerSessions(btn.dataset.viewSessions));
+        </div>`;
+      }).join('');
+      list.querySelectorAll('[data-view-shots-admin]').forEach(btn => {
+        btn.addEventListener('click', () => loadTimeTrackerShots(null, btn.dataset.viewShotsAdmin));
+      });
+      list.querySelectorAll('.tt-rate-input').forEach(input => {
+        let saveTimer;
+        input.addEventListener('input', () => {
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(async () => {
+            try {
+              await updateDoc(doc(db, 'admins', input.dataset.rateEmail), { hourlyRate: parseFloat(input.value) || 0 });
+              loadTimeTrackerAdmins(); // refresh to show updated pay estimate
+            } catch (e) { /* silent — rate just won't persist if rules aren't published yet */ }
+          }, 900);
+        });
       });
     } catch (err) {
       list.innerHTML = errorStateHtml("Couldn't load time tracking data — " + (err.message || err) + ". If this mentions an index, open the browser/app console (F12) and click the link Firestore gives you to auto-create it.");
     }
   }
-  document.getElementById('timeTrackerBackBtn')?.addEventListener('click', () => {
-    document.getElementById('timeTrackerSessions').style.display = 'none';
+  document.getElementById('timeTrackerExportBtn')?.addEventListener('click', () => {
+    if (!timeTrackerAllSessions.length) { alert('No sessions to export yet.'); return; }
+    const rows = [['Admin Email', 'Started', 'Ended', 'Duration', 'Status', 'Note']];
+    timeTrackerAllSessions.forEach(s => {
+      rows.push([
+        s.adminEmail || '',
+        s.startedAt?.toDate ? s.startedAt.toDate().toLocaleString() : '',
+        s.endedAt?.toDate ? s.endedAt.toDate().toLocaleString() : '',
+        s.totalSeconds ? formatDuration(s.totalSeconds) : '',
+        s.status || '',
+        (s.note || '').replace(/[\r\n,]/g, ' ')
+      ]);
+    });
+    const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `time-tracker-sessions-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
   });
-  async function loadTimeTrackerSessions(email) {
-    const wrap = document.getElementById('timeTrackerSessions');
-    const list = document.getElementById('timeTrackerSessionsList');
-    wrap.style.display = 'block';
-    document.getElementById('timeTrackerSessionsTitle').textContent = email;
-    list.innerHTML = skeletonGridHtml(3);
-    try {
-      const snap = await getDocs(query(collection(db, 'timeTrackingSessions'), where('adminEmail', '==', email), orderBy('startedAt', 'desc')));
-      if (snap.empty) { list.innerHTML = emptyStateHtml('⏱️', 'No sessions found.'); return; }
-      list.innerHTML = snap.docs.map(d => {
-        const s = d.data();
-        const started = s.startedAt && s.startedAt.toDate ? s.startedAt.toDate().toLocaleString() : '—';
-        const duration = s.totalSeconds ? formatDuration(s.totalSeconds) : (s.status === 'active' ? '🟢 Still tracking' : '—');
-        return `
-          <div class="admin-order-row">
-            <div class="info">
-              <b>${started}</b>
-              <span>${duration}</span>
-            </div>
-            <div class="actions">
-              <button type="button" class="mini-btn" data-view-shots="${d.id}">View Screenshots</button>
-            </div>
-          </div>`;
-      }).join('');
-      list.querySelectorAll('[data-view-shots]').forEach(btn => {
-        btn.addEventListener('click', () => loadTimeTrackerShots(btn.dataset.viewShots));
-      });
-    } catch (err) {
-      list.innerHTML = errorStateHtml("Couldn't load sessions — " + (err.message || err) + ". If this mentions an index, open the browser/app console (F12) and click the link Firestore gives you to auto-create it.");
-    }
-  }
-  async function loadTimeTrackerShots(sessionId) {
+  async function loadTimeTrackerShots(sessionId, adminEmail) {
     const modal = document.getElementById('timeTrackerShotsModal');
     const grid = document.getElementById('timeTrackerShotsGrid');
     modal.style.display = 'flex';
+    document.getElementById('timeTrackerShotsTitle').textContent = adminEmail ? `Screenshots — ${adminEmail}` : 'Screenshots';
     grid.innerHTML = skeletonGridHtml(4);
     try {
-      const snap = await getDocs(query(collection(db, 'timeTrackerShots'), where('sessionId', '==', sessionId), orderBy('takenAt', 'asc')));
-      if (snap.empty) { grid.innerHTML = emptyStateHtml('📷', 'No screenshots for this session (or it just started).'); return; }
-      const items = await Promise.all(snap.docs.map(async d => {
+      // Sorted in JS (not via Firestore orderBy) so this never needs a composite index.
+      const q = sessionId
+        ? query(collection(db, 'timeTrackerShots'), where('sessionId', '==', sessionId))
+        : query(collection(db, 'timeTrackerShots'), where('adminEmail', '==', adminEmail));
+      const snap = await getDocs(q);
+      if (snap.empty) { grid.innerHTML = emptyStateHtml('📷', 'No screenshots yet.'); return; }
+      const docsSorted = snap.docs.slice().sort((a, b) => {
+        const ta = a.data().takenAt?.toMillis ? a.data().takenAt.toMillis() : 0;
+        const tb = b.data().takenAt?.toMillis ? b.data().takenAt.toMillis() : 0;
+        return tb - ta; // newest first
+      });
+      const items = await Promise.all(docsSorted.map(async d => {
         const s = d.data();
         try {
           const url = await getDownloadURL(ref(storage, s.storagePath));
-          const time = s.takenAt && s.takenAt.toDate ? s.takenAt.toDate().toLocaleTimeString() : '';
-          return `<a href="${url}" target="_blank" rel="noopener" style="display:block;border-radius:10px;overflow:hidden;border:1px solid var(--line);">
-            <img src="${url}" style="width:100%;display:block;" loading="lazy">
-            <span style="display:block;padding:6px 8px;font-size:11px;color:var(--muted);">${time}</span>
-          </a>`;
+          const time = s.takenAt && s.takenAt.toDate ? s.takenAt.toDate().toLocaleString() : '';
+          const fname = (s.adminEmail || 'shot').replace(/[^a-zA-Z0-9]/g, '_') + '_' + (s.takenAt && s.takenAt.toDate ? s.takenAt.toDate().toISOString().replace(/[:.]/g, '-') : Date.now()) + '.png';
+          return `<div style="border-radius:10px;overflow:hidden;border:1px solid var(--line);">
+            <a href="${url}" target="_blank" rel="noopener" style="display:block;">
+              <img src="${url}" style="width:100%;display:block;" loading="lazy">
+            </a>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;gap:8px;">
+              <span style="font-size:11px;color:var(--muted);">${time}</span>
+              <button type="button" class="mini-btn" data-download-url="${url}" data-download-name="${escapeHtml(fname)}" style="flex-shrink:0;">⬇ Download</button>
+            </div>
+          </div>`;
         } catch (e) { return ''; }
       }));
       grid.innerHTML = items.join('') || emptyStateHtml('📷', "Screenshots exist but couldn't load — check Storage Rules are published.");
+      grid.querySelectorAll('[data-download-url]').forEach(btn => {
+        btn.addEventListener('click', () => downloadShot(btn.dataset.downloadUrl, btn.dataset.downloadName, btn));
+      });
     } catch (err) {
       grid.innerHTML = errorStateHtml("Couldn't load screenshots — " + (err.message || err) + ". If this mentions an index, open the browser/app console (F12) and click the link Firestore gives you to auto-create it.");
     }
+  }
+  async function downloadShot(url, filename, btn) {
+    const original = btn.textContent;
+    btn.textContent = 'Downloading…'; btn.disabled = true;
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+    } catch (e) {
+      alert('Download failed — try right-clicking the image and "Save image as" instead.');
+    }
+    btn.textContent = original; btn.disabled = false;
   }
   document.getElementById('timeTrackerShotsClose')?.addEventListener('click', () => {
     document.getElementById('timeTrackerShotsModal').style.display = 'none';
