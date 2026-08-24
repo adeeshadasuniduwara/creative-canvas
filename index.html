@@ -1930,14 +1930,6 @@
   <source src="assets/welcome-voice-si.mp3" type="audio/mpeg">
 </audio>
 
-<!-- 🔧 Background music — add your own royalty-free/copyright-free instrumental track (no vocals) at assets/background-music.mp3.
-     Good free sources: pixabay.com/music (free, no attribution needed), YouTube Audio Library, freemusicarchive.org (check license). -->
-<audio id="bgMusic" loop preload="auto">
-  <source src="assets/background-music.mp3" type="audio/mpeg">
-</audio>
-<button type="button" id="bgMusicToggle" aria-label="Toggle background music" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:250;background:var(--card);border:1px solid var(--line);border-radius:100px;padding:9px 16px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;font-family:'Inter';align-items:center;gap:8px;">
-  🎵 <span id="bgMusicLabel">Music On</span>
-</button>
 <button type="button" id="speechMuteBtn" aria-label="Mute welcome speech" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:251;background:var(--grad);border:none;border-radius:100px;padding:10px 18px;font-size:12.5px;font-weight:700;color:#0a0a0d;cursor:pointer;font-family:'Inter';align-items:center;gap:8px;box-shadow:0 12px 30px -8px rgba(255,61,119,0.5);">
   🔊 Speaking… tap to mute
 </button>
@@ -2626,61 +2618,6 @@
     ['click', 'touchstart', 'keydown'].forEach(evt => document.removeEventListener(evt, firstInteractionSpeechFallback));
   }
   ['click', 'touchstart', 'keydown'].forEach(evt => document.addEventListener(evt, firstInteractionSpeechFallback, { once: false }));
-
-  /* ---------------- Background Music — fully independent of speech, keeps playing/looping
-     from login until the tab is refreshed or the user mutes it themselves. ---------------- */
-  let musicUserMuted = false;
-  let musicStartAttempted = false;
-
-  function preloadBackgroundMusic() {
-    const music = document.getElementById('bgMusic');
-    if (!music) return;
-    try { music.load(); } catch (e) { /* non-critical */ }
-  }
-
-  function startBackgroundMusic() {
-    const music = document.getElementById('bgMusic');
-    const toggle = document.getElementById('bgMusicToggle');
-    if (!music || musicUserMuted) return;
-    musicStartAttempted = true;
-    toggle.style.display = 'flex';
-    if (!music.paused) return; // already playing — don't restart/refade
-    const targetVolume = 0.35;
-    music.volume = 0;
-    music.play().then(() => {
-      document.getElementById('bgMusicLabel').textContent = 'Music On';
-      let vol = 0;
-      const fade = setInterval(() => {
-        vol = Math.min(targetVolume, vol + 0.03);
-        music.volume = vol;
-        if (vol >= targetVolume) clearInterval(fade);
-      }, 80);
-    }).catch(() => { /* autoplay blocked — first-interaction fallback below will retry */ });
-  }
-
-  // Try immediately on load, then keep retrying on the first user interaction until it
-  // actually starts (covers every browser's autoplay policy without needing speech to finish).
-  preloadBackgroundMusic();
-  startBackgroundMusic();
-  function firstInteractionMusicFallback() {
-    const music = document.getElementById('bgMusic');
-    if (music && music.paused && !musicUserMuted) startBackgroundMusic();
-  }
-  ['click', 'touchstart', 'keydown'].forEach(evt => document.addEventListener(evt, firstInteractionMusicFallback, { once: false }));
-
-  document.getElementById('bgMusicToggle')?.addEventListener('click', () => {
-    const music = document.getElementById('bgMusic');
-    const label = document.getElementById('bgMusicLabel');
-    if (music.paused) {
-      musicUserMuted = false;
-      music.play(); music.volume = 0.35;
-      label.textContent = 'Music On';
-    } else {
-      musicUserMuted = true;
-      music.pause();
-      label.textContent = 'Music Off';
-    }
-  });
 
   /* ---------------- Notification System (bell + beep) ---------------- */
   function playNotifBeep() {
