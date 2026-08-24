@@ -86,6 +86,8 @@
   if (window.emailjs && window.EMAILJS_PUBLIC_KEY !== "YOUR_EMAILJS_PUBLIC_KEY") {
     window.emailjs.init({ publicKey: window.EMAILJS_PUBLIC_KEY });
   }
+  // 🔧 PASTE YOUR GOOGLE DRIVE API KEY HERE (see FIREBASE-SETUP.md "Photo Delivery Gallery" section)
+  window.GOOGLE_DRIVE_API_KEY = "AIzaSyDpO_oWmFDbSCbwvXetIxSTqlWXBiX2-PM";
 </script>
 <style>
 
@@ -527,6 +529,10 @@
   .lightbox-prev{left:20px;}
   .lightbox-next{right:20px;}
   @media(max-width:640px){ .lightbox-nav-btn{width:40px;height:40px;} .lightbox-prev{left:8px;} .lightbox-next{right:8px;} }
+  .delivery-photo-card{background:var(--bg-alt);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .delivery-photo-card img{width:100%;aspect-ratio:4/3;object-fit:cover;cursor:pointer;display:block;transition:transform .3s ease;}
+  .delivery-photo-card img:hover{transform:scale(1.03);}
+  .delivery-photo-card .dl-row{padding:8px;display:flex;justify-content:center;}
   #lightboxContent iframe{width:80vw;height:45vw;max-height:70vh;border:none;}
   .portfolio-tile:hover{border-color:var(--pink);color:var(--text);}
   .portfolio-tile svg{width:28px;height:28px;stroke:var(--muted);}
@@ -1159,6 +1165,15 @@
   <button type="button" id="lightboxNext" class="lightbox-nav-btn lightbox-next" aria-label="Next photo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
   </button>
+</div>
+
+<div class="modal-overlay" id="deliveryGalleryModal" style="display:none;">
+  <div class="modal-card" style="max-width:1100px;max-height:88vh;overflow-y:auto;">
+    <button class="modal-close" id="deliveryGalleryClose" aria-label="Close">&times;</button>
+    <h3 id="deliveryGalleryTitle" style="font-size:18px;font-weight:700;margin-bottom:6px;">Your Photos</h3>
+    <p style="color:var(--muted);font-size:12.5px;margin-bottom:16px;">Click any photo to preview it larger, or use the download button to save the original full-quality file.</p>
+    <div id="deliveryGalleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;"></div>
+  </div>
 </div>
 
 <section id="shop">
@@ -2327,9 +2342,18 @@
           const refQ = query(usersCol, where('referralCode', '==', refCodeFromUrl));
           const refSnap = await getDocs(refQ);
           if (!refSnap.empty) {
-            newUserDoc.referredBy = refSnap.docs[0].id;
+            const referrerUid = refSnap.docs[0].id;
+            const referrerName = refSnap.docs[0].data().name || 'Someone';
+            newUserDoc.referredBy = referrerUid;
             newUserDoc.referredByCode = refCodeFromUrl;
             newUserDoc.referredAt = serverTimestamp();
+            // A separate, minimal PUBLIC record for the leaderboard — deliberately excludes
+            // email/whatsapp/wallet so the public leaderboard never exposes private customer data.
+            try {
+              await setDoc(doc(db, 'referralPublic', cred.user.uid), {
+                referredBy: referrerUid, referrerName, referredAt: serverTimestamp()
+              });
+            } catch (e2) { /* non-critical */ }
           }
         } catch (e) { /* non-critical */ }
       }
@@ -3091,7 +3115,7 @@
   document.getElementById('bulkMarkReadyBtn')?.addEventListener('click', async () => {
     const ids = Array.from(document.querySelectorAll('.order-bulk-check:checked')).map(cb => cb.dataset.id);
     if (!ids.length) return;
-    const link = prompt(`Same Google Drive link for all ${ids.length} selected orders:`);
+    const link = prompt(`Same Google Drive link for all ${ids.length} selected orders.\n\n⚠️ Note: this sets a plain "Open Drive Link" button, NOT the in-site photo gallery — a shared folder would let these customers see each other's photos. Use "Mark Ready" on each order individually if you want the private gallery.`);
     if (!link) return;
     await Promise.all(ids.map(id => updateDoc(doc(db, 'orders', id), { status: 'ready', driveLink: link.trim() })));
     logAdminActivity('Bulk marked ready', `${ids.length} orders`);
@@ -3107,7 +3131,9 @@
     const usdtDue = rate ? (pending / rate).toFixed(2) : null;
 
     let actionHtml = '';
-    if (isReady && isPaid && o.driveLink) {
+    if (isReady && isPaid && o.driveFolderId) {
+      actionHtml = `<button type="button" class="btn btn-primary" data-open-gallery="${o.driveFolderId}" data-gallery-title="${escapeHtml(o.title || 'Your Photos')}">📷 View & Download Photos</button>`;
+    } else if (isReady && isPaid && o.driveLink) {
       actionHtml = `<a href="${o.driveLink}" target="_blank" rel="noopener" class="btn btn-primary">Open Drive Link</a>`;
     } else if (isReady && !isPaid) {
       if (o.paymentStatus === 'proof_submitted') {
@@ -3281,7 +3307,46 @@
   }
 
   const pendingProofImages = {};
+  async function openDeliveryGallery(folderId, title) {
+    const modal = document.getElementById('deliveryGalleryModal');
+    const grid = document.getElementById('deliveryGalleryGrid');
+    document.getElementById('deliveryGalleryTitle').textContent = title || 'Your Photos';
+    modal.style.display = 'flex';
+    grid.innerHTML = skeletonGridHtml(6);
+    if (!window.GOOGLE_DRIVE_API_KEY || window.GOOGLE_DRIVE_API_KEY === 'YOUR_GOOGLE_DRIVE_API_KEY') {
+      grid.innerHTML = errorStateHtml("Photo gallery isn't set up yet — please contact us directly and we'll share your photos another way in the meantime.");
+      return;
+    }
+    try {
+      const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed=false&fields=files(id,name,mimeType)&key=${window.GOOGLE_DRIVE_API_KEY}&pageSize=1000`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      const files = (data.files || []).filter(f => f.mimeType && f.mimeType.startsWith('image/'));
+      if (!files.length) { grid.innerHTML = emptyStateHtml('📷', 'No photos found in this gallery yet.'); return; }
+      grid.innerHTML = files.map(f => `
+        <div class="delivery-photo-card">
+          <img src="https://drive.google.com/thumbnail?id=${f.id}&sz=w500" loading="lazy" data-preview-id="${f.id}" alt="${escapeHtml(f.name)}">
+          <div class="dl-row"><a href="https://drive.google.com/uc?export=download&id=${f.id}" class="mini-btn" download>⬇ Download Original</a></div>
+        </div>`).join('');
+      grid.querySelectorAll('img[data-preview-id]').forEach(img => {
+        img.addEventListener('click', () => openLightbox({ image: `https://drive.google.com/thumbnail?id=${img.dataset.previewId}&sz=w2000` }, -1));
+      });
+    } catch (err) {
+      grid.innerHTML = errorStateHtml("Couldn't load photos — " + err.message + '. Make sure the Drive folder is shared as "Anyone with the link — Viewer".');
+    }
+  }
+  document.getElementById('deliveryGalleryClose')?.addEventListener('click', () => {
+    document.getElementById('deliveryGalleryModal').style.display = 'none';
+  });
+  document.getElementById('deliveryGalleryModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'deliveryGalleryModal') e.target.style.display = 'none';
+  });
+
   function attachProofHandlers() {
+    document.querySelectorAll('[data-open-gallery]').forEach(btn => {
+      btn.addEventListener('click', () => openDeliveryGallery(btn.dataset.openGallery, btn.dataset.galleryTitle));
+    });
     document.querySelectorAll('.print-receipt-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         try { printReceipt(JSON.parse(btn.dataset.order.replace(/&#39;/g, "'"))); }
@@ -3463,9 +3528,14 @@
       });
       list.querySelectorAll('[data-action="ready"]').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const link = prompt('Paste the Google Drive link for this order:');
+          const link = prompt("Paste the Google Drive FOLDER link for this order's photos (make sure it's shared as \"Anyone with the link — Viewer\"):");
           if (!link) return;
-          await updateDoc(doc(db, 'orders', btn.dataset.id), { status: 'ready', driveLink: link.trim() });
+          const folderMatch = link.trim().match(/folders\/([a-zA-Z0-9_-]+)/) || link.trim().match(/^([a-zA-Z0-9_-]{20,})$/);
+          const driveFolderId = folderMatch ? folderMatch[1] : null;
+          const updates = { status: 'ready', driveLink: link.trim() };
+          if (driveFolderId) updates.driveFolderId = driveFolderId;
+          else alert("Couldn't detect a folder ID in that link — saved as a plain link instead. Customers will get an \"Open Drive Link\" button rather than the in-site gallery.");
+          await updateDoc(doc(db, 'orders', btn.dataset.id), updates);
           logAdminActivity('Marked order ready', btn.dataset.title || '');
           sendOrderReadyEmail(btn.dataset.email, btn.dataset.title);
           loadAdminOrders();
@@ -6655,24 +6725,25 @@
     try {
       const now = new Date();
       const startOfMonth = Timestamp.fromDate(new Date(now.getFullYear(), now.getMonth(), 1));
-      const q = query(usersCol, where('referredAt', '>=', startOfMonth));
+      // Reads the minimal PUBLIC referral collection (no email/whatsapp/wallet data) —
+      // never the private users collection — so nothing sensitive is ever exposed here.
+      const q = query(collection(db, 'referralPublic'), where('referredAt', '>=', startOfMonth));
       const snap = await getDocs(q);
-      const counts = {};
+      const counts = {}; // referrerUid -> { count, name }
       snap.forEach(d => {
-        const rb = d.data().referredBy;
-        if (rb) counts[rb] = (counts[rb] || 0) + 1;
+        const data = d.data();
+        if (!data.referredBy) return;
+        if (!counts[data.referredBy]) counts[data.referredBy] = { count: 0, name: data.referrerName || 'Someone' };
+        counts[data.referredBy].count++;
       });
-      const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const ranked = Object.entries(counts).sort((a, b) => b[1].count - a[1].count).slice(0, 5);
       if (!ranked.length) {
         list.innerHTML = '<p style="color:var(--muted);font-size:14px;">No referrals yet this month — be the first!</p>';
         return;
       }
-      const rows = await Promise.all(ranked.map(async ([uid, count], i) => {
-        let name = 'Someone';
-        try { const uSnap = await getDoc(doc(db, 'users', uid)); if (uSnap.exists()) name = uSnap.data().name || name; } catch (e) {}
-        return `<div class="leaderboard-row"><span class="leaderboard-rank">${i + 1}</span><span class="leaderboard-name">${escapeHtml(name)}</span><span class="leaderboard-count">${count} referral${count > 1 ? 's' : ''}</span></div>`;
-      }));
-      list.innerHTML = rows.join('');
+      list.innerHTML = ranked.map(([uid, info], i) =>
+        `<div class="leaderboard-row"><span class="leaderboard-rank">${i + 1}</span><span class="leaderboard-name">${escapeHtml(info.name)}</span><span class="leaderboard-count">${info.count} referral${info.count > 1 ? 's' : ''}</span></div>`
+      ).join('');
     } catch (err) {
       list.innerHTML = '<p style="color:var(--muted);font-size:14px;">Leaderboard unavailable right now.</p>';
     }
@@ -6976,7 +7047,6 @@
       await addDoc(reviewsCol, {
         uid: currentUser.uid,
         name,
-        email: currentUser.email,
         rating: selectedRating,
         comment,
         image: compressedImage || null,
