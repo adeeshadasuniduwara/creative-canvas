@@ -2840,7 +2840,11 @@
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
       if (user) {
-        checkDailyAutoLogout();
+        // Record today's date as "active" right when they sign in — the setInterval above
+        // (every 60s) is the single source of truth for detecting the midnight rollover,
+        // so we don't re-run the check here too. Calling it from both places caused a race
+        // that could trigger two separate logouts back-to-back.
+        localStorage.setItem('ccs-last-active-date', getSLDateString());
         signInBtn.style.display = 'none';
         userBadge.style.display = 'flex';
         const label = user.displayName || (user.email ? user.email.split('@')[0] : 'Account');
