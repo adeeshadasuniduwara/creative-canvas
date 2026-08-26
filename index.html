@@ -3445,6 +3445,7 @@
           <div class="actions">
             ${showArchived ? '' : (o.status === 'ready' ? '<span class="order-badge ready">Ready</span>' : `<button class="mini-btn" data-action="ready" data-id="${docSnap.id}" data-email="${escapeHtml(o.customerEmail||'')}" data-title="${escapeHtml(o.title||'Order')}">Mark Ready</button>`)}
             ${o.paymentProof ? `<button class="mini-btn" data-action="view-proof" data-id="${docSnap.id}">View Proof</button>` : ''}
+            ${!showArchived && currentUserIsOwner && needsPayment ? `<button class="mini-btn" data-action="full-payment" data-id="${docSnap.id}">✅ Mark Full Payment</button>` : ''}
             ${!showArchived && currentUserIsOwner && needsPayment && o.paymentStatus === 'proof_submitted' ? `<button class="mini-btn" data-action="approve" data-id="${docSnap.id}">Approve Payment</button>` : ''}
             ${!showArchived && currentUserIsAdmin ? `<button class="mini-btn" data-action="edit" data-id="${docSnap.id}" data-days="${o.days}" data-total="${o.totalAmount||0}" data-advance="${o.advancePayment||0}" data-eventdate="${o.eventDate||''}" data-title="${escapeHtml(o.title||'')}">Edit</button>` : ''}
             ${!showArchived && currentUserIsAdmin ? `<button class="mini-btn" data-action="priority" data-id="${docSnap.id}" data-priority="${priority}">Priority</button>` : ''}
@@ -3513,6 +3514,22 @@
             } catch (calErr) { console.error('Calendar save failed:', calErr); }
           }
           loadAdminOrders();
+        });
+      });
+      list.querySelectorAll('[data-action="full-payment"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Mark this order as fully paid? This sets the advance amount to equal the total, clearing any pending balance.')) return;
+          try {
+            const oSnap = await getDoc(doc(db, 'orders', btn.dataset.id));
+            if (!oSnap.exists()) return;
+            const total = oSnap.data().totalAmount || 0;
+            await updateDoc(doc(db, 'orders', btn.dataset.id), { advancePayment: total, paymentStatus: 'approved' });
+            if (oSnap.data().customerEmail) {
+              createNotification('customer', oSnap.data().customerEmail, `✅ Full payment confirmed for "${oSnap.data().title || 'your order'}"!`);
+            }
+            logAdminActivity('Marked full payment', btn.dataset.id);
+            loadAdminOrders();
+          } catch (e) { alert('Could not update — check Firestore Rules are published.'); }
         });
       });
       list.querySelectorAll('[data-action="approve"]').forEach(btn => {
