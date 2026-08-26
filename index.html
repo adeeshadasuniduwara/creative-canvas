@@ -1552,6 +1552,10 @@
       <input type="number" id="ordDays" placeholder="Days to complete" required min="1">
       <input type="number" id="ordTotal" placeholder="Total amount (Rs.)" required min="0">
       <input type="number" id="ordAdvance" placeholder="Advance paid (Rs.)" required min="0">
+      <label style="grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;margin-top:-4px;">
+        <input type="checkbox" id="ordFullPaid" style="width:16px;height:16px;accent-color:var(--pink);">
+        Customer already paid in full (skip advance/pending tracking)
+      </label>
       <button type="submit" class="btn btn-primary full">Add Order</button>
       <p id="adminMsg" class="full" style="font-size:13px;min-height:16px;"></p>
     </form>
@@ -3151,11 +3155,15 @@
           <div class="order-countdown"><b>${remaining}</b> day${remaining === 1 ? '' : 's'} remaining of ${o.days}</div>
           <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>
         ` : ''}
-        <div class="payment-grid">
-          <div><div class="p-label">Total</div><div class="p-val">Rs. ${(o.totalAmount || 0).toLocaleString()}</div></div>
-          <div><div class="p-label">Advance</div><div class="p-val">Rs. ${(o.advancePayment || 0).toLocaleString()}</div></div>
-          <div><div class="p-label">Pending</div><div class="p-val">Rs. ${pending.toLocaleString()}</div></div>
-        </div>
+        ${isReady && isPaid ? `
+          <p style="color:#4cd964;font-size:13.5px;font-weight:600;margin:10px 0;">✅ Full Payment Done — Rs. ${(o.totalAmount || 0).toLocaleString()}</p>
+        ` : `
+          <div class="payment-grid">
+            <div><div class="p-label">Total</div><div class="p-val">Rs. ${(o.totalAmount || 0).toLocaleString()}</div></div>
+            <div><div class="p-label">Advance</div><div class="p-val">Rs. ${(o.advancePayment || 0).toLocaleString()}</div></div>
+            <div><div class="p-label">Pending</div><div class="p-val">Rs. ${pending.toLocaleString()}</div></div>
+          </div>
+        `}
         ${actionHtml}
         <button type="button" class="mini-btn print-receipt-btn" data-order='${JSON.stringify({ orderNumber: o.orderNumber, title: o.title, totalAmount: o.totalAmount, advancePayment: o.advancePayment, pending, days: o.days, status: o.status, customerEmail: o.customerEmail, customerName: currentUser ? (currentUser.displayName || '') : '' }).replace(/'/g, "&#39;")}' style="width:100%;justify-content:center;margin-top:10px;">🧾 Print Receipt</button>
         <button type="button" class="mini-btn pdf-invoice-btn" data-order='${JSON.stringify({ orderNumber: o.orderNumber, title: o.title, totalAmount: o.totalAmount, advancePayment: o.advancePayment, pending, days: o.days, status: o.status, customerEmail: o.customerEmail, customerName: currentUser ? (currentUser.displayName || '') : '' }).replace(/'/g, "&#39;")}' style="width:100%;justify-content:center;margin-top:8px;">⬇️ Download PDF Invoice</button>
@@ -6450,22 +6458,40 @@
     return '#' + String(next).padStart(6, '0');
   }
 
+  document.getElementById('ordFullPaid')?.addEventListener('change', (e) => {
+    const advanceInput = document.getElementById('ordAdvance');
+    const totalInput = document.getElementById('ordTotal');
+    if (e.target.checked) {
+      advanceInput.value = totalInput.value || '';
+      advanceInput.disabled = true;
+    } else {
+      advanceInput.disabled = false;
+    }
+  });
+  document.getElementById('ordTotal')?.addEventListener('input', (e) => {
+    if (document.getElementById('ordFullPaid').checked) {
+      document.getElementById('ordAdvance').value = e.target.value;
+    }
+  });
   document.getElementById('adminOrderForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     adminMsg.style.color = 'var(--muted)'; adminMsg.textContent = 'Adding order…';
     try {
       const orderNumber = await getNextOrderNumber();
       const eventDate = document.getElementById('ordEventDate').value;
+      const totalAmount = parseFloat(document.getElementById('ordTotal').value);
+      const fullyPaid = document.getElementById('ordFullPaid').checked;
+      const advancePayment = fullyPaid ? totalAmount : parseFloat(document.getElementById('ordAdvance').value);
       await addDoc(ordersCol, {
         orderNumber,
         customerEmail: document.getElementById('ordEmail').value.trim().toLowerCase(),
         title: document.getElementById('ordTitle').value.trim(),
         eventDate,
         days: parseInt(document.getElementById('ordDays').value),
-        totalAmount: parseFloat(document.getElementById('ordTotal').value),
-        advancePayment: parseFloat(document.getElementById('ordAdvance').value),
+        totalAmount,
+        advancePayment,
         status: 'in-progress',
-        paymentStatus: 'unpaid',
+        paymentStatus: fullyPaid ? 'approved' : 'unpaid',
         paymentProof: null,
         driveLink: null,
         createdAt: serverTimestamp()
