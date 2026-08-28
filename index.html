@@ -883,6 +883,49 @@
   }
   .modal-close{position:absolute;top:18px;right:18px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;}
   .modal-close:hover{color:var(--text);}
+
+  /* ---------------- Login/Signup — colorful gradient backdrop + glass card ---------------- */
+  #authModal{
+    background:linear-gradient(135deg, var(--gold), var(--pink) 35%, var(--purple) 65%, var(--blue));
+    backdrop-filter:none;overflow:hidden;
+  }
+  #authModal::before, #authModal::after{
+    content:'';position:absolute;border-radius:50%;filter:blur(60px);opacity:0.55;pointer-events:none;
+  }
+  #authModal::before{width:340px;height:340px;background:rgba(255,255,255,0.35);top:-80px;left:-80px;}
+  #authModal::after{width:420px;height:420px;background:rgba(10,10,13,0.35);bottom:-120px;right:-100px;}
+  #authModal .modal-card{
+    background:rgba(19,19,24,0.6);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid rgba(255,255,255,0.18);box-shadow:0 30px 70px -18px rgba(0,0,0,0.55);position:relative;z-index:1;
+  }
+  html[data-theme="light"] #authModal .modal-card{background:rgba(255,255,255,0.55);border-color:rgba(255,255,255,0.6);}
+  html[data-theme="light"] #authModal .modal-card *{color:#15151a;}
+  html[data-theme="light"] #authModal .modal-card input{background:rgba(255,255,255,0.7);color:#15151a;}
+  /* ---------------- Login/Signup Camera Mascot ---------------- */
+  #authMascot{display:flex;justify-content:center;margin-bottom:6px;}
+  .mascot-body{fill:var(--card);stroke:var(--line);stroke-width:2;}
+  .mascot-strap{fill:var(--line);}
+  .mascot-viewfinder{fill:var(--bg-alt);stroke:var(--line);stroke-width:2;}
+  .mascot-flash{fill:var(--gold);opacity:0.85;}
+  .mascot-lens-outer{fill:var(--bg-alt);stroke:var(--line);stroke-width:2;}
+  .mascot-lens-mid{fill:#0a0a0d;}
+  .mascot-iris{fill:url(#mascotIrisGrad);}
+  .mascot-pupil{fill:#0a0a0d;transition:cx .12s ease, cy .12s ease;}
+  .mascot-glint{fill:#fff;opacity:0.9;}
+  .mascot-eye-group{transition:opacity .25s ease;}
+  #mascotShutter{transition:opacity .25s ease;}
+  #mascotShutter .blade{fill:#1a1a1f;stroke:#000;stroke-width:0.5;transform-origin:70px 66px;transition:transform .35s cubic-bezier(.2,.8,.2,1);}
+  #authMascot.eyes-open #mascotShutter .blade{transform:scale(0);}
+  #authMascot.eyes-open .mascot-eye-group{opacity:1;}
+  #authMascot:not(.eyes-open) .mascot-eye-group{opacity:0;}
+  #authMascot:not(.eyes-open) #mascotShutter .blade{transform:scale(1);}
+  @keyframes mascotBlink{0%,92%,100%{transform:scaleY(1);}96%{transform:scaleY(.08);}}
+  .mascot-eye-group{transform-origin:70px 66px;animation:mascotBlink 5s ease-in-out infinite;}
+  #authMascot.mascot-happy svg{animation:mascotBounce .5s ease;}
+  @keyframes mascotBounce{0%,100%{transform:translateY(0) rotate(0);}30%{transform:translateY(-8px) rotate(-4deg);}60%{transform:translateY(2px) rotate(3deg);}}
+  #authMascot.mascot-flash-pop .mascot-flash{animation:mascotFlashPop .4s ease;}
+  @keyframes mascotFlashPop{0%{opacity:0.85;r:7;}40%{opacity:1;r:11;filter:drop-shadow(0 0 8px var(--gold));}100%{opacity:0.85;r:7;}}
+
   .auth-tabs{display:flex;gap:8px;margin-bottom:26px;background:var(--bg-alt);border-radius:100px;padding:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .auth-tabs::-webkit-scrollbar{display:none;}
   .auth-tab{flex:1;flex-shrink:0;background:none;border:none;padding:10px 16px;border-radius:100px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:'Inter';transition:all .25s;white-space:nowrap;}
@@ -1392,6 +1435,39 @@
 <div class="modal-overlay" id="authModal" style="display:none;">
   <div class="modal-card">
     <button class="modal-close" id="authClose" aria-label="Close">&times;</button>
+    <div id="authMascot" aria-hidden="true">
+      <svg viewBox="0 0 140 120" width="100" height="86">
+        <defs>
+          <linearGradient id="mascotIrisGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--gold)"/>
+            <stop offset="40%" stop-color="var(--pink)"/>
+            <stop offset="70%" stop-color="var(--purple)"/>
+            <stop offset="100%" stop-color="var(--blue)"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="70" cy="108" rx="38" ry="6" fill="rgba(0,0,0,0.25)"/>
+        <rect x="14" y="70" width="18" height="14" rx="4" class="mascot-strap"/>
+        <rect x="108" y="70" width="18" height="14" rx="4" class="mascot-strap"/>
+        <rect x="8" y="30" width="124" height="72" rx="20" class="mascot-body"/>
+        <rect x="46" y="16" width="48" height="20" rx="8" class="mascot-viewfinder"/>
+        <circle cx="112" cy="46" r="7" class="mascot-flash"/>
+        <circle cx="70" cy="66" r="30" class="mascot-lens-outer"/>
+        <circle cx="70" cy="66" r="24" class="mascot-lens-mid"/>
+        <g class="mascot-eye-group">
+          <circle cx="70" cy="66" r="16" class="mascot-iris"/>
+          <circle id="mascotPupil" cx="70" cy="66" r="7" class="mascot-pupil"/>
+          <circle cx="65" cy="61" r="2.5" class="mascot-glint"/>
+        </g>
+        <g id="mascotShutter" class="mascot-shutter">
+          <path d="M70 66 L70 36 A30 30 0 0 1 96 51 Z" class="blade"/>
+          <path d="M70 66 L96 51 A30 30 0 0 1 96 81 Z" class="blade"/>
+          <path d="M70 66 L96 81 A30 30 0 0 1 70 96 Z" class="blade"/>
+          <path d="M70 66 L70 96 A30 30 0 0 1 44 81 Z" class="blade"/>
+          <path d="M70 66 L44 81 A30 30 0 0 1 44 51 Z" class="blade"/>
+          <path d="M70 66 L44 51 A30 30 0 0 1 70 36 Z" class="blade"/>
+        </g>
+      </svg>
+    </div>
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="signin" type="button">Sign In</button>
       <button class="auth-tab" data-tab="signup" type="button">Sign Up</button>
@@ -2206,12 +2282,57 @@
   const reviewSignedOut = document.getElementById('reviewSignedOut');
   const reviewFormEl = document.getElementById('reviewForm');
 
-  function openAuthModal() { authModal.style.display = 'flex'; authMsg.textContent = ''; }
+  function openAuthModal() {
+    authModal.style.display = 'flex'; authMsg.textContent = '';
+    document.getElementById('authMascot')?.classList.add('eyes-open');
+  }
   function closeAuthModal() { authModal.style.display = 'none'; }
   signInBtn?.addEventListener('click', (e) => { e.preventDefault(); openAuthModal(); });
   reviewSignInBtn?.addEventListener('click', () => openAuthModal());
   authClose?.addEventListener('click', closeAuthModal);
   authModal?.addEventListener('click', (e) => { if (e.target === authModal) closeAuthModal(); });
+
+  // ---------------- Camera Mascot interactivity ----------------
+  (function initAuthMascot() {
+    const mascot = document.getElementById('authMascot');
+    const pupil = document.getElementById('mascotPupil');
+    if (!mascot || !pupil) return;
+
+    function movePupil(input) {
+      const len = Math.max(input.value.length, 1);
+      const pos = (input.selectionStart ?? len) / Math.max(len, 8); // 0 (start) → 1 (end, capped)
+      const ratio = Math.min(1, Math.max(0, pos));
+      const x = 70 + (ratio - 0.5) * 26; // pupil travels roughly ±13px around center
+      const y = 66 + Math.sin(ratio * Math.PI) * 2; // slight vertical dip mid-typing, purely for charm
+      pupil.setAttribute('cx', x.toFixed(1));
+      pupil.setAttribute('cy', y.toFixed(1));
+    }
+    function resetPupil() { pupil.setAttribute('cx', 70); pupil.setAttribute('cy', 66); }
+
+    const watchFields = ['siEmail', 'suName', 'suEmail'];
+    const hideFields = ['siPassword', 'suPassword'];
+
+    watchFields.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => movePupil(el));
+      el.addEventListener('click', () => movePupil(el));
+      el.addEventListener('keyup', () => movePupil(el));
+      el.addEventListener('focus', () => { mascot.classList.add('eyes-open'); movePupil(el); });
+      el.addEventListener('blur', resetPupil);
+    });
+    hideFields.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('focus', () => mascot.classList.remove('eyes-open'));
+      el.addEventListener('blur', () => { mascot.classList.add('eyes-open'); resetPupil(); });
+    });
+
+    window.celebrateAuthMascot = function () {
+      mascot.classList.add('eyes-open', 'mascot-happy', 'mascot-flash-pop');
+      setTimeout(() => mascot.classList.remove('mascot-happy', 'mascot-flash-pop'), 600);
+    };
+  })();
 
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -2229,7 +2350,8 @@
     authMsg.style.color = 'var(--muted)'; authMsg.textContent = 'Signing in…';
     try {
       await signInWithEmailAndPassword(auth, document.getElementById('siEmail').value.trim(), document.getElementById('siPassword').value);
-      closeAuthModal();
+      window.celebrateAuthMascot?.();
+      setTimeout(closeAuthModal, 550);
       playWelcomeSpeech();
     } catch (err) {
       console.error('Sign-in error:', err.code, err.message);
@@ -2360,7 +2482,8 @@
       document.getElementById('signUpForm').reset();
       document.getElementById('signUpStep1').style.display = 'flex';
       document.getElementById('signUpStep2').style.display = 'none';
-      closeAuthModal();
+      window.celebrateAuthMascot?.();
+      setTimeout(closeAuthModal, 550);
       playWelcomeSpeech();
     } catch (err) {
       console.error('Sign-up error:', err.code, err.message);
@@ -2392,7 +2515,7 @@
   });
 
   document.getElementById('googleBtn')?.addEventListener('click', async () => {
-    try { await signInWithPopup(auth, new GoogleAuthProvider()); closeAuthModal(); playWelcomeSpeech(); }
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); window.celebrateAuthMascot?.(); setTimeout(closeAuthModal, 550); playWelcomeSpeech(); }
     catch (err) {
       console.error('Google sign-in error:', err.code, err.message);
       authMsg.style.color = 'var(--pink)';
@@ -2580,16 +2703,19 @@
     return document.getElementById(lang === 'si' ? 'welcomeVoiceAudioSi' : 'welcomeVoiceAudioEn');
   }
   function playWelcomeSpeech() {
-    if (!canPlayWelcomeSpeechToday()) return;
+    if (!canPlayWelcomeSpeechToday()) return Promise.resolve(false);
     const audio = getWelcomeVoiceAudio();
-    if (!audio) return;
+    if (!audio) return Promise.resolve(false);
     try {
       audio.currentTime = 0;
-      audio.play().then(() => {
+      return audio.play().then(() => {
         recordWelcomeSpeechPlay();
         showSpeechMuteButton();
-      }).catch(() => { /* autoplay blocked — first-interaction fallback below will retry */ });
-    } catch (e) { /* non-critical */ }
+        return true;
+      }).catch(() => false); // autoplay blocked — first-interaction fallback below will retry
+    } catch (e) {
+      return Promise.resolve(false);
+    }
   }
 
   function showSpeechMuteButton() {
@@ -2612,14 +2738,24 @@
 
   // Try to play on page load too (in addition to login/signup)
   playWelcomeSpeech();
-  // Safety net: browsers block audio from starting without a user gesture first —
-  // if that happens, play it on the very first tap/click/key press instead.
+  // Safety net: browsers block audio from starting without a user gesture first — if that
+  // happens, keep retrying on every tap/click/key press (not just the first one) until it
+  // actually succeeds. Previously this gave up after a single attempt even if that attempt
+  // silently failed (e.g. the audio file hadn't finished loading yet), which is why it could
+  // take a second click before the voice actually started.
+  let speechFallbackAttempted = false;
   function firstInteractionSpeechFallback() {
     const audio = getWelcomeVoiceAudio();
-    if (canPlayWelcomeSpeechToday() && audio && audio.paused) {
-      playWelcomeSpeech();
-    }
-    ['click', 'touchstart', 'keydown'].forEach(evt => document.removeEventListener(evt, firstInteractionSpeechFallback));
+    if (!canPlayWelcomeSpeechToday() || !audio || !audio.paused) return;
+    if (speechFallbackAttempted) return; // an attempt is already in flight — avoid overlapping calls
+    speechFallbackAttempted = true;
+    playWelcomeSpeech().then((ok) => {
+      speechFallbackAttempted = false;
+      if (ok) {
+        ['click', 'touchstart', 'keydown'].forEach(evt => document.removeEventListener(evt, firstInteractionSpeechFallback));
+      }
+      // if it failed, listeners stay active so the very next interaction retries automatically
+    });
   }
   ['click', 'touchstart', 'keydown'].forEach(evt => document.addEventListener(evt, firstInteractionSpeechFallback, { once: false }));
 
@@ -3077,7 +3213,7 @@
 
     let actionHtml = '';
     if (isReady && isPaid && o.driveFolderId) {
-      actionHtml = `<button type="button" class="btn btn-primary" data-open-gallery="${o.driveFolderId}" data-gallery-title="${escapeHtml(o.title || 'Your Photos')}">📷 View & Download Photos</button>`;
+      actionHtml = `<button type="button" class="btn btn-primary" data-open-gallery="${o.driveFolderId}" data-gallery-title="${escapeHtml(o.title || 'Your Photos')}" data-gallery-fallback="${o.driveLink || `https://drive.google.com/drive/folders/${o.driveFolderId}`}">📷 View & Download Photos</button>`;
     } else if (isReady && isPaid && o.driveLink) {
       actionHtml = `<a href="${o.driveLink}" target="_blank" rel="noopener" class="btn btn-primary">Open Drive Link</a>`;
     } else if (isReady && !isPaid) {
@@ -3256,14 +3392,17 @@
   }
 
   const pendingProofImages = {};
-  async function openDeliveryGallery(folderId, title) {
+  async function openDeliveryGallery(folderId, title, fallbackLink) {
     const modal = document.getElementById('deliveryGalleryModal');
     const grid = document.getElementById('deliveryGalleryGrid');
     document.getElementById('deliveryGalleryTitle').textContent = title || 'Your Photos';
     modal.style.display = 'flex';
     grid.innerHTML = skeletonGridHtml(6);
+    const fallbackHtml = fallbackLink
+      ? `<div style="grid-column:1/-1;text-align:center;margin-top:10px;"><a href="${fallbackLink}" target="_blank" rel="noopener" class="btn btn-outline">📂 Open in Google Drive instead</a></div>`
+      : '';
     if (!window.GOOGLE_DRIVE_API_KEY || window.GOOGLE_DRIVE_API_KEY === 'YOUR_GOOGLE_DRIVE_API_KEY') {
-      grid.innerHTML = errorStateHtml("Photo gallery isn't set up yet — please contact us directly and we'll share your photos another way in the meantime.");
+      grid.innerHTML = errorStateHtml("Photo gallery isn't set up yet — please contact us directly and we'll share your photos another way in the meantime.") + fallbackHtml;
       return;
     }
     try {
@@ -3272,7 +3411,7 @@
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
       const files = (data.files || []).filter(f => f.mimeType && f.mimeType.startsWith('image/'));
-      if (!files.length) { grid.innerHTML = emptyStateHtml('📷', 'No photos found in this gallery yet.'); return; }
+      if (!files.length) { grid.innerHTML = emptyStateHtml('📷', 'No photos found in this gallery yet.') + fallbackHtml; return; }
       grid.innerHTML = files.map(f => `
         <div class="delivery-photo-card">
           <img src="https://drive.google.com/thumbnail?id=${f.id}&sz=w500" loading="lazy" data-preview-id="${f.id}" alt="${escapeHtml(f.name)}">
@@ -3282,7 +3421,7 @@
         img.addEventListener('click', () => openLightbox({ image: `https://drive.google.com/thumbnail?id=${img.dataset.previewId}&sz=w2000` }, -1));
       });
     } catch (err) {
-      grid.innerHTML = errorStateHtml("Couldn't load photos — " + err.message + '. Make sure the Drive folder is shared as "Anyone with the link — Viewer".');
+      grid.innerHTML = errorStateHtml("Couldn't load photos here — " + err.message + '. You can still get your photos below.') + fallbackHtml;
     }
   }
   document.getElementById('deliveryGalleryClose')?.addEventListener('click', () => {
@@ -3294,7 +3433,7 @@
 
   function attachProofHandlers() {
     document.querySelectorAll('[data-open-gallery]').forEach(btn => {
-      btn.addEventListener('click', () => openDeliveryGallery(btn.dataset.openGallery, btn.dataset.galleryTitle));
+      btn.addEventListener('click', () => openDeliveryGallery(btn.dataset.openGallery, btn.dataset.galleryTitle, btn.dataset.galleryFallback));
     });
     document.querySelectorAll('.print-receipt-btn').forEach(btn => {
       btn.addEventListener('click', () => {
