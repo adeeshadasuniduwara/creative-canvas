@@ -88,6 +88,8 @@
   }
   // 🔧 PASTE YOUR GOOGLE DRIVE API KEY HERE (see FIREBASE-SETUP.md "Photo Delivery Gallery" section)
   window.GOOGLE_DRIVE_API_KEY = "AIzaSyDpO_oWmFDbSCbwvXetIxSTqlWXBiX2-PM";
+  // 🔧 PASTE YOUR APP CHECK reCAPTCHA v3 SITE KEY HERE (see FIREBASE-SETUP.md "AI Assistant" section)
+  window.RECAPTCHA_APP_CHECK_SITE_KEY = "YOUR_RECAPTCHA_APP_CHECK_SITE_KEY";
 </script>
 <style>
 
@@ -2208,17 +2210,21 @@
      5. In Firestore > Rules, paste the security rules from the README section below
 ============================================================ -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, where, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc, runTransaction, Timestamp, limit }
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { getStorage, ref, getDownloadURL }
-    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+  import { getStorage, ref, getDownloadURL, uploadBytes }
+    from "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
     GoogleAuthProvider, signInWithPopup, signOut,
     onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendPasswordResetEmail,
     linkWithCredential, updatePassword, EmailAuthProvider
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+  import { getAI, getGenerativeModel, GoogleAIBackend }
+    from "https://www.gstatic.com/firebasejs/12.17.1/firebase-ai.js";
+  import { initializeAppCheck, ReCaptchaV3Provider }
+    from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app-check.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDVDXIOO1mOEZ8394NmkMWICGvA566VtVs",
@@ -2230,8 +2236,22 @@
   };
 
   let db, reviewsCol, auth, storage, firebaseReady = false;
+  let aiTextModel = null, aiImageModel = null; // Gemini, via Firebase AI Logic — set up below, never blocks the rest of the site if it fails
+  let firebaseApp = null;
   try {
     const app = initializeApp(firebaseConfig);
+    firebaseApp = app;
+    // App Check protects the Gemini AI Logic quota (and, soon, is required by Google) from
+    // abuse by unauthorized clients. reCAPTCHA v3 here is fully invisible — no checkbox or
+    // challenge shown to visitors, unlike the old reCAPTCHA v2 widget removed earlier.
+    if (window.RECAPTCHA_APP_CHECK_SITE_KEY && window.RECAPTCHA_APP_CHECK_SITE_KEY !== 'YOUR_RECAPTCHA_APP_CHECK_SITE_KEY') {
+      try {
+        initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(window.RECAPTCHA_APP_CHECK_SITE_KEY),
+          isTokenAutoRefreshEnabled: true
+        });
+      } catch (e) { console.warn('App Check not initialized:', e); }
+    }
     db = getFirestore(app);
     storage = getStorage(app);
     reviewsCol = collection(db, "reviews");
@@ -2241,6 +2261,24 @@
   } catch (e) {
     firebaseReady = false;
   }
+
+  // Gemini AI (Firebase AI Logic) — set up defensively, so if it's not configured yet
+  // (or the browser can't reach it) every OTHER feature on the site still works normally.
+  (function initGeminiAI() {
+    if (!firebaseReady || !firebaseApp) return;
+    try {
+      const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
+      // 🔧 Model names change over time — if these start erroring, check Firebase Console →
+      // AI Logic → "Supported models" for the current recommended text/image model names.
+      aiTextModel = getGenerativeModel(ai, { model: 'gemini-flash-lite-latest' });
+      aiImageModel = getGenerativeModel(ai, {
+        model: 'gemini-3.1-flash-image',
+        generationConfig: { responseModalities: ['IMAGE'] }
+      });
+    } catch (e) {
+      console.warn('Gemini AI Logic not available yet (chat/poster AI features will use fallbacks):', e);
+    }
+  })();
 
   const ADMIN_EMAIL = 'adeeshadasuniduwara@gmail.com';
   const ordersCol = firebaseReady ? collection(db, "orders") : null;
@@ -4061,6 +4099,7 @@
     if (!currentUserIsAdmin) return;
     switchAdminTab('adminTabProducts');
     loadAdminProducts();
+    retryQueuedPosters();
   });
   document.getElementById('adminTabPortfolio')?.addEventListener('click', () => {
     if (!currentUserIsOwner) return;
@@ -4643,9 +4682,29 @@
             <button class="mini-btn" data-action="edit-product" data-id="${docSnap.id}">Edit</button>
             <button class="mini-btn" data-action="change-image" data-id="${docSnap.id}">🖼️ Change Image</button>
             <button class="mini-btn" data-action="clone-product" data-id="${docSnap.id}">📋 Clone</button>
+            ${p.posterStoragePath ? `<button class="mini-btn" data-action="view-poster" data-path="${p.posterStoragePath}">🖼️ View Poster</button>` : `<button class="mini-btn" data-action="gen-poster" data-id="${docSnap.id}">✨ Generate Poster</button>`}
             <button class="mini-btn danger" data-action="delete-product" data-id="${docSnap.id}">Delete</button>
           </div>`;
         list.appendChild(row);
+      });
+      list.querySelectorAll('[data-action="view-poster"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            const url = await getDownloadURL(ref(storage, btn.dataset.path));
+            openLightbox({ image: url }, -1);
+          } catch (e) { alert("Couldn't load the poster — check Storage Rules are published."); }
+        });
+      });
+      list.querySelectorAll('[data-action="gen-poster"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            const pSnap = await getDoc(doc(db, 'products', btn.dataset.id));
+            if (!pSnap.exists()) return;
+            btn.textContent = 'Generating…'; btn.disabled = true;
+            await generateProductPoster(btn.dataset.id, pSnap.data());
+            loadAdminProducts();
+          } catch (e) { alert('Could not generate poster.'); }
+        });
       });
       list.querySelectorAll('[data-action="delete-product"]').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -5104,23 +5163,25 @@
     if (!tiers.length) { msg.style.color = 'var(--pink)'; msg.textContent = 'Please add at least one price tier with a label and price.'; return; }
     msg.style.color = 'var(--muted)'; msg.textContent = 'Adding…';
     try {
-      await addDoc(productsCol, {
+      const newProductData = {
         section: document.getElementById('prodSection').value.trim(),
         name: document.getElementById('prodName').value.trim(),
         description: document.getElementById('prodDesc').value.trim(),
         tiers: tiers,
         image: selectedProductImage,
         createdAt: serverTimestamp()
-      });
+      };
+      const newProductRef = await addDoc(productsCol, newProductData);
       e.target.reset();
       selectedProductImage = null;
       document.getElementById('prodImagePreview').style.display = 'none';
       document.getElementById('prodImageStatus').textContent = '';
       document.getElementById('prodTiersList').innerHTML = '';
       addTierRow('Photo', ''); addTierRow('Video', ''); addTierRow('Full Combo', '');
-      msg.style.color = 'var(--blue)'; msg.textContent = 'Package added!';
+      msg.style.color = 'var(--blue)'; msg.textContent = 'Package added! Generating a promotional poster in the background…';
       loadAdminProducts();
       loadShopProducts();
+      generateProductPoster(newProductRef.id, newProductData);
     } catch (err) {
       msg.style.color = 'var(--pink)'; msg.textContent = 'Could not add package.';
     }
@@ -5731,6 +5792,108 @@
   renderCart();
 
   /* ---------------- Chat Assistant (scripted, on-topic only, EN/SI) ---------------- */
+
+  // Cached per page-load so we don't re-fetch Firestore on every single chat message.
+  let cachedBusinessContext = null;
+  async function buildBusinessContext() {
+    if (cachedBusinessContext) return cachedBusinessContext;
+    let context = `You are the friendly customer-support chat assistant for Creative Canvas Studio, a photography / videography / dronography / editing business based in Sri Lanka. Reply warmly, helpfully, and concisely (2-4 short sentences, no long essays). ALWAYS reply in the same language the customer just wrote in (English or Sinhala/Singlish) — match their language. Never invent prices, dates, or policies you're not given below — if you genuinely don't know something, say so and suggest they tap the WhatsApp button to ask the team directly. Do not discuss anything unrelated to this business (no general knowledge questions, coding help, etc.) — politely redirect back to how you can help with their photography/booking needs instead.\n\n`;
+    try {
+      const snap = await getDocs(productsCol);
+      const lines = [];
+      snap.forEach(d => {
+        const p = d.data();
+        let line = `- ${p.name || 'Package'}`;
+        if (p.description) line += `: ${p.description}`;
+        if (p.tiers && p.tiers.length) line += ' | Pricing: ' + p.tiers.map(t => `${t.label} Rs.${(t.price || 0).toLocaleString()}`).join(', ');
+        else if (p.price) line += ` | Rs.${p.price.toLocaleString()}`;
+        lines.push(line);
+      });
+      context += 'CURRENT PACKAGES & PRICING:\n' + (lines.join('\n') || '(none listed yet — suggest they check the Packages section or ask on WhatsApp)') + '\n\n';
+    } catch (e) { /* non-critical — context still works without live pricing */ }
+    context += `BUSINESS POLICIES:\n- A 30% advance payment is required to reserve a booking date.\n- Advance payments are refundable if cancelled more than 7 days before the event.\n- Finished/edited photos are typically delivered within 5-10 working days after the event.\n- There is a referral program: customers can refer friends for a discount.\n- We offer photography, videography, drone (aerial) coverage, and photo/video editing services across Sri Lanka.\n`;
+    cachedBusinessContext = context;
+    return context;
+  }
+
+  // ---------------- Auto-Poster Generator (Gemini image model, "Nano Banana 2") ----------------
+  // Generates a square promotional graphic for a new package — usable both as a social media
+  // post and, at the model's native resolution, as a starting point for a printed poster
+  // (note: AI image models don't output true 300-DPI print resolution — see FIREBASE-SETUP.md
+  // for upscaling this further if you want an actual large-format print).
+  function buildPosterPrompt(product) {
+    const priceLine = (product.tiers && product.tiers.length)
+      ? product.tiers.map(t => `${t.label}: Rs.${(t.price || 0).toLocaleString()}`).join(', ')
+      : '';
+    return `Create a vibrant, professional square (1:1 aspect ratio) promotional poster/social media graphic for a Sri Lankan photography studio called "Creative Canvas Studio". The poster is for a package called "${product.name}"${product.section ? ` (category: ${product.section})` : ''}. ${product.description ? `Package details: ${product.description}. ` : ''}${priceLine ? `Include the pricing clearly and elegantly: ${priceLine}. ` : ''}Style: warm cinematic photography aesthetic, gold/pink/purple/blue gradient accents, elegant modern typography, the studio name "Creative Canvas Studio" visible, professional and eye-catching, suitable for Instagram and print. No watermarks from other brands.`;
+  }
+
+  async function generateProductPoster(productId, product) {
+    if (!aiImageModel) {
+      await queuePosterRetry(productId, product, 'AI not set up yet');
+      return false;
+    }
+    try {
+      const prompt = buildPosterPrompt(product);
+      const result = await aiImageModel.generateContent(prompt);
+      const parts = result?.response?.candidates?.[0]?.content?.parts || [];
+      const imgPart = parts.find(p => p.inlineData || p.inline_data);
+      const inline = imgPart?.inlineData || imgPart?.inline_data;
+      if (!inline || !inline.data) throw new Error('No image returned');
+      const byteChars = atob(inline.data);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const path_ = `productPosters/${productId}.png`;
+      await uploadBytes(ref(storage, path_), bytes, { contentType: inline.mimeType || 'image/png' });
+      await updateDoc(doc(db, 'products', productId), { posterStoragePath: path_, posterGeneratedAt: serverTimestamp() });
+      showGreetToast(`🖼️ Poster ready for "${product.name}" — check the Packages tab.`);
+      return true;
+    } catch (err) {
+      console.error('Poster generation failed:', err);
+      await queuePosterRetry(productId, product, err.message || 'unknown error');
+      return false;
+    }
+  }
+
+  async function queuePosterRetry(productId, product, reason) {
+    try {
+      await setDoc(doc(db, 'posterQueue', productId), {
+        productId, product, reason, queuedAt: serverTimestamp()
+      });
+    } catch (e) { /* non-critical — admin can always retry manually from the Packages tab */ }
+  }
+
+  // Retries any queued posters — called when the owner opens the Packages tab, so a quota
+  // limit hit yesterday gets picked up automatically once it resets (daily, for most quotas).
+  async function retryQueuedPosters() {
+    if (!aiImageModel || !currentUserIsOwner) return;
+    try {
+      const snap = await getDocs(collection(db, 'posterQueue'));
+      for (const d of snap.docs) {
+        const { productId, product } = d.data();
+        const ok = await generateProductPoster(productId, product);
+        if (ok) await deleteDoc(doc(db, 'posterQueue', d.id)).catch(() => {});
+        // if it failed again, queuePosterRetry() (called inside generateProductPoster) has
+        // already refreshed this same queue entry — leave it in place for the next retry
+      }
+    } catch (e) { /* non-critical */ }
+  }
+
+
+  async function getGeminiChatReply(userText) {
+    if (!aiTextModel) return null; // AI not set up yet or failed to load — caller falls back to keyword matching
+    try {
+      const context = await buildBusinessContext();
+      const prompt = `${context}\n\nCustomer's message: "${userText.replace(/"/g, "'")}"\n\nYour reply:`;
+      const result = await aiTextModel.generateContent(prompt);
+      const text = result?.response?.text?.();
+      return text ? text.trim() : null;
+    } catch (err) {
+      console.error('Gemini chat reply failed, falling back to keyword matching:', err);
+      return null;
+    }
+  }
+
   let chatLang = 'en';
   const chatKB = [
     {
@@ -6065,15 +6228,30 @@
     body.scrollTop = body.scrollHeight;
     setTimeout(async () => {
       typing.remove();
-      const match = matchChatKB(text);
-      const logId = await logChatQuestion(text, match, escalated);
       if (escalated) {
+        const logId = await logChatQuestion(text, { key: 'escalated' }, escalated);
         addChatMsg(chatLang === 'si'
           ? 'මේක serious කරුණක් වගේ පේනවා — කරුණාකර අපේ team එකට කෙලින්ම කතා කරන්න, ඉක්මනටම help කරන්නම්.'
           : "This sounds important — let's get you straight to our team so we can help right away.", 'bot', logId);
         renderWhatsAppHandoff(text);
         return;
       }
+
+      // Try a real AI reply first (Gemini, with live business context) — falls back to the
+      // keyword-matching system below if AI isn't set up yet, is offline, or hits a quota limit.
+      const aiReply = await getGeminiChatReply(text);
+      if (aiReply) {
+        const logId = await logChatQuestion(text, { key: 'ai' }, escalated);
+        addChatMsg(aiReply, 'bot', logId);
+        const lowerText = text.toLowerCase();
+        if (/packag|price|cost|pricing|tier|rate/i.test(lowerText)) renderPackageCarousel();
+        if (/book|reserve|schedul|date/i.test(lowerText)) renderBookingOccasionChips();
+        renderPostAnswerChips();
+        return;
+      }
+
+      const match = matchChatKB(text);
+      const logId = await logChatQuestion(text, match, escalated);
       addChatMsg(match ? match[chatLang] : chatFallback[chatLang], 'bot', logId);
       if (match && match.key === 'packages') renderPackageCarousel();
       if (match && match.key === 'booking') renderBookingOccasionChips();
