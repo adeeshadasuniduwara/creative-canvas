@@ -89,7 +89,7 @@
   // 🔧 PASTE YOUR GOOGLE DRIVE API KEY HERE (see FIREBASE-SETUP.md "Photo Delivery Gallery" section)
   window.GOOGLE_DRIVE_API_KEY = "AIzaSyDpO_oWmFDbSCbwvXetIxSTqlWXBiX2-PM";
   // 🔧 PASTE YOUR APP CHECK reCAPTCHA v3 SITE KEY HERE (see FIREBASE-SETUP.md "AI Assistant" section)
-  window.RECAPTCHA_APP_CHECK_SITE_KEY = "YOUR_RECAPTCHA_APP_CHECK_SITE_KEY";
+  window.RECAPTCHA_APP_CHECK_SITE_KEY = "6LfsvZ0tAAAAAPuYOTpAEtNryalGC-23wu068cRv";
 </script>
 <style>
 
@@ -2276,6 +2276,7 @@
         generationConfig: { responseModalities: ['IMAGE'] }
       });
     } catch (e) {
+      window.__lastGeminiError = 'Init failed: ' + ((e && e.message) || String(e));
       console.warn('Gemini AI Logic not available yet (chat/poster AI features will use fallbacks):', e);
     }
   })();
@@ -3230,6 +3231,7 @@
     await Promise.all(ids.map(id => updateDoc(doc(db, 'orders', id), { archived: true })));
     logAdminActivity('Bulk archived orders', `${ids.length} orders`);
     loadAdminOrders();
+    loadAdminStats();
   });
   document.getElementById('bulkMarkReadyBtn')?.addEventListener('click', async () => {
     const ids = Array.from(document.querySelectorAll('.order-bulk-check:checked')).map(cb => cb.dataset.id);
@@ -3691,6 +3693,7 @@
             } catch (calErr) { console.error('Calendar save failed:', calErr); }
           }
           loadAdminOrders();
+          loadAdminStats();
         });
       });
       list.querySelectorAll('[data-action="full-payment"]').forEach(btn => {
@@ -3706,6 +3709,7 @@
             }
             logAdminActivity('Marked full payment', btn.dataset.id);
             loadAdminOrders();
+            loadAdminStats();
           } catch (e) { alert('Could not update — check Firestore Rules are published.'); }
         });
       });
@@ -3721,6 +3725,7 @@
           } catch (e) { /* non-critical */ }
           logAdminActivity('Approved payment', btn.dataset.id);
           loadAdminOrders();
+          loadAdminStats();
         });
       });
       list.querySelectorAll('[data-action="view-proof"]').forEach(btn => {
@@ -3735,12 +3740,14 @@
           await updateDoc(doc(db, 'orders', btn.dataset.id), { archived: true, archivedAt: serverTimestamp() });
           logAdminActivity('Archived order', btn.dataset.id);
           loadAdminOrders();
+          loadAdminStats();
         });
       });
       list.querySelectorAll('[data-action="restore"]').forEach(btn => {
         btn.addEventListener('click', async () => {
           await updateDoc(doc(db, 'orders', btn.dataset.id), { archived: false, archivedAt: null });
           loadAdminOrders(true);
+          loadAdminStats();
         });
       });
       list.querySelectorAll('[data-action="delete-forever"]').forEach(btn => {
@@ -3749,6 +3756,7 @@
           await deleteDoc(doc(db, 'orders', btn.dataset.id));
           logAdminActivity('Permanently deleted order', btn.dataset.id);
           loadAdminOrders(true);
+          loadAdminStats();
         });
       });
       compactifyRowActions('adminOrdersList');
@@ -5881,7 +5889,10 @@
 
 
   async function getGeminiChatReply(userText) {
-    if (!aiTextModel) return null; // AI not set up yet or failed to load — caller falls back to keyword matching
+    if (!aiTextModel) {
+      console.warn('Gemini chat: aiTextModel is null — AI Logic setup did not complete (check console above for the initGeminiAI warning).');
+      return null;
+    }
     try {
       const context = await buildBusinessContext();
       const prompt = `${context}\n\nCustomer's message: "${userText.replace(/"/g, "'")}"\n\nYour reply:`;
@@ -5889,7 +5900,10 @@
       const text = result?.response?.text?.();
       return text ? text.trim() : null;
     } catch (err) {
-      console.error('Gemini chat reply failed, falling back to keyword matching:', err);
+      console.error('Gemini chat reply failed, falling back to keyword matching. Full error:', err);
+      if (currentUserIsOwner) {
+        window.__lastGeminiError = (err && err.message) || String(err);
+      }
       return null;
     }
   }
@@ -6193,6 +6207,21 @@
 
   function sendChatMessage(text) {
     if (!text.trim()) return;
+
+    // Owner-only diagnostic: type /aistatus in the chat to see exactly why Gemini isn't replying —
+    // no DevTools/console needed.
+    if (text.trim().toLowerCase() === '/aistatus' && currentUserIsOwner) {
+      addChatMsg(text, 'user');
+      document.getElementById('chatInput').value = '';
+      const lines = [
+        `Text model ready: ${aiTextModel ? '✅ yes' : '❌ no'}`,
+        `Image model ready: ${aiImageModel ? '✅ yes' : '❌ no'}`,
+        `App Check key set: ${window.RECAPTCHA_APP_CHECK_SITE_KEY && window.RECAPTCHA_APP_CHECK_SITE_KEY !== 'YOUR_RECAPTCHA_APP_CHECK_SITE_KEY' ? '✅ yes' : '❌ no (still placeholder)'}`,
+        `Last Gemini error: ${window.__lastGeminiError || '(none yet)'}`
+      ];
+      addChatMsg(lines.join('\n'), 'bot');
+      return;
+    }
 
     // Rate-limit: more than 6 messages within 10 seconds looks like spam/abuse
     const now = Date.now();
@@ -6845,6 +6874,7 @@
         adminMsg.style.color = 'var(--blue)'; adminMsg.textContent = `Order ${orderNumber} added!`;
       }
       loadAdminOrders();
+      loadAdminStats();
     } catch (err) {
       adminMsg.style.color = 'var(--pink)'; adminMsg.textContent = 'Could not add order.';
     }
