@@ -3882,13 +3882,15 @@
   async function loadAdminStats() {
     try {
       const snap = await getDocs(ordersCol);
-      let totalIncome = 0, monthOrders = 0, pending = 0;
+      let totalIncome = 0, monthOrders = 0, pending = 0, nonArchivedCount = 0, withAmountCount = 0;
       const now = new Date();
       const monthlyIncome = {}; // 'YYYY-M' -> Rs.
       snap.forEach(d => {
         const o = d.data();
         if (o.archived) return;
+        nonArchivedCount++;
         const total = o.totalAmount || 0;
+        if (total > 0) withAmountCount++;
         const advance = o.advancePayment || 0;
         const orderPending = total - advance;
         const earned = (orderPending <= 0 || o.paymentStatus === 'approved') ? total : advance;
@@ -3905,12 +3907,28 @@
       document.getElementById('statMonthOrders').textContent = monthOrders;
       document.getElementById('statPending').textContent = pending.toLocaleString();
 
+      window.__lastStatsDebug = `Fetched ${snap.size} order doc(s) total · ${nonArchivedCount} not archived · ${withAmountCount} have totalAmount > 0 · sum=${totalIncome}`;
+      if (currentUserIsOwner) {
+        let dbg = document.getElementById('statsDebugLine');
+        if (!dbg) {
+          dbg = document.createElement('p');
+          dbg.id = 'statsDebugLine';
+          dbg.style.cssText = 'font-size:11px;color:var(--muted);margin-top:8px;';
+          document.getElementById('adminInsightsBox')?.parentElement?.insertBefore(dbg, document.getElementById('adminInsightsBox'));
+        }
+        dbg.textContent = '🔍 ' + window.__lastStatsDebug;
+      }
+
       cachedMonthlyIncome = monthlyIncome;
       renderIncomeChartForPeriod(document.getElementById('incomePeriodSelect')?.value || '6');
       loadPopularPackages();
       document.getElementById('adminInsightsBox').style.display = 'block';
     } catch (err) {
       console.error('Stats load failed:', err);
+      if (currentUserIsOwner) {
+        window.__lastStatsError = (err && err.message) || String(err);
+        document.getElementById('statTotalIncome').textContent = 'ERR';
+      }
     }
   }
 
@@ -5890,6 +5908,7 @@
 
   async function getGeminiChatReply(userText) {
     if (!aiTextModel) {
+      window.__lastGeminiError = 'aiTextModel is null — AI Logic did not initialize (check the init error above, or via /aistatus).';
       console.warn('Gemini chat: aiTextModel is null — AI Logic setup did not complete (check console above for the initGeminiAI warning).');
       return null;
     }
@@ -5898,12 +5917,21 @@
       const prompt = `${context}\n\nCustomer's message: "${userText.replace(/"/g, "'")}"\n\nYour reply:`;
       const result = await aiTextModel.generateContent(prompt);
       const text = result?.response?.text?.();
-      return text ? text.trim() : null;
+      if (text && text.trim()) {
+        window.__lastGeminiError = null;
+        return text.trim();
+      }
+      // The call succeeded (no exception) but returned no usable text — this happens when
+      // Gemini's safety filters block the prompt/response, or an unusual finishReason occurs.
+      // Previously this was completely invisible; now it's captured for /aistatus.
+      const blockReason = result?.response?.promptFeedback?.blockReason;
+      const finishReason = result?.response?.candidates?.[0]?.finishReason;
+      window.__lastGeminiError = `Call succeeded but returned no text. blockReason=${blockReason || 'none'}, finishReason=${finishReason || 'none'}`;
+      console.warn('Gemini returned no text:', result);
+      return null;
     } catch (err) {
       console.error('Gemini chat reply failed, falling back to keyword matching. Full error:', err);
-      if (currentUserIsOwner) {
-        window.__lastGeminiError = (err && err.message) || String(err);
-      }
+      window.__lastGeminiError = (err && err.message) || String(err);
       return null;
     }
   }
